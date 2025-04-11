@@ -1,0 +1,1 @@
+GTetris.Rulesets = {}
