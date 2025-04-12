@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-GTetris = {}
+GTetris = GTetris || {}
 GTetris.LoadPath = "gtetris/"
 
 if(CLIENT) then

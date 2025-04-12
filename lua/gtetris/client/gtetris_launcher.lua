@@ -1,24 +1,72 @@
 GTetris.MainUI = GTetris.MainUI || nil
+GTetris.UI_MAIN = 1
+GTetris.UI_SINGLEPLAYER = 2
+GTetris.UI_MULTIPLAYER = 3
+GTetris.UI_MULTIPLAYER_LOBBY = 4
+GTetris.UI_SETTINGS = 5
 
 local buttons = {
 	{
 		title = "Singleplayer",
+		icon = "gtetris/singleplayer.png",
+		desc = "Challenge yourself",
 		func = function(ui)
+			local BaseUI = ui.SetupScene(GTetris.UI_SINGLEPLAYER)
 
+		end,
+		clickfunc = function(ui)
+			local BaseUI = ui.GetScene(GTetris.UI_SINGLEPLAYER)
+			ui.SwitchScene(GTetris.UI_SINGLEPLAYER)
+			GTetris.SetupBoardLayer(BaseUI)
+			GTetris.CreateBoard(LocalPlayer():SteamID64(), true)
+			GTetris.SortBoards(true)
+			GTetris.AddBackButton(BaseUI, function()
+				ui.SwitchScene(GTetris.UI_MAIN)
+				GTetris.DestroyBoardLayer()
+			end)
 		end,
 	},
 	{
 		title = "Multiplayer",
+		icon = "gtetris/multiplayer.png",
+		desc = "Play against players on the server",
 		func = function(ui)
-
+			local BaseUI = ui.SetupScene(GTetris.UI_MULTIPLAYER)
+		end,
+		clickfunc = function(ui)
+			local BaseUI = ui.GetScene(GTetris.UI_MULTIPLAYER)
+			ui.SwitchScene(GTetris.UI_MULTIPLAYER)
+			GTetris.AddBackButton(BaseUI, function()
+				ui.SwitchScene(GTetris.UI_MAIN)
+			end)
 		end,
 	},
 	{
 		title = "Settings",
+		icon = "gtetris/settings.png",
+		desc = "Change game settings",
+		func = function(ui)
+			local BaseUI = ui.SetupScene(GTetris.UI_SETTINGS)
+		end,
+		clickfunc = function(ui)
+			local BaseUI = ui.GetScene(GTetris.UI_SETTINGS)
+			ui.SwitchScene(GTetris.UI_SETTINGS)
+			GTetris.AddBackButton(BaseUI, function()
+				ui.SwitchScene(GTetris.UI_MAIN)
+			end)
+		end,
+	},
+	{
+		title = "Quit",
+		icon = "gtetris/quit.png",
+		desc = "Quit the game",
 		func = function(ui)
 
 		end,
-	},
+		clickfunc = function(ui)
+			GTetris.MainUI:Remove()
+		end,
+	}
 }
 
 local logo = Material("gtetris/logo.png")
@@ -29,30 +77,84 @@ function GTetris.LaunchGame()
 	local scrw, scrh = ScrW(), ScrH()
 	local headerTall = scrh * 0.07
 	local gap = ScreenScaleH(8)
-	local buttonTall = scrh * 0.1
+	local buttonTall = scrh * 0.12
 	local ui = GTetris.CreateFrame(nil, 0, 0, scrw, scrh, Color(0, 0, 0, 225))
 		ui:MakePopup()
+		ui.Scenes = {}
+		ui.Container = GTetris.CreatePanelContainer(ui, 0, 0, scrw, scrh, Color(0, 0, 0, 0))
 		ui.Header = GTetris.CreateFrame(ui, 0, 0, scrw, headerTall, Color(25, 25, 25, 255))
 		ui.Footer = GTetris.CreateFrame(ui, 0, scrh - headerTall, scrw, headerTall, Color(25, 25, 25, 255))
-		ui.LogoSize = scrh * 0.25
-		ui.Logo = GTetris.CreatePanelMatAuto(ui, (scrw - ui.LogoSize) * 0.5, scrh * 0.125, ui.LogoSize, ui.LogoSize, "gtetris/logo.png", color_white)
+		ui.LogoSize = scrh * 0.215
+		
+		ui.SetupScene = function(sceneid)
+			local panel = GTetris.CreatePanel(ui.Container, 0, 0, scrw, scrh, Color(0, 0, 0, 0))
+			ui.Scenes[sceneid] = panel
+			ui.Container.AddPanel(panel)
+			return panel
+		end
+
+		ui.SwitchScene = function(sceneid)
+			local scene = ui.Scenes[sceneid]
+			if(IsValid(scene)) then
+				ui.Container.CurrentPanel = scene
+			end
+		end
+
+		ui.GetScene = function(sceneid)
+			return ui.Scenes[sceneid]
+		end
+
+		ui.GetCurrentScene = function()
+			return ui.Container.CurrentPanel
+		end
 
 		ui.HeaderSizes = headerTall
+		ui.HeaderInc = ScreenScaleH(4)
 		ui.HeaderDisplaying = true
 		ui.Think = function()
 			if(ui.HeaderDisplaying) then
-
+				ui.HeaderSizes = GTetris.IncFV(ui.HeaderSizes, ui.HeaderInc, 0, headerTall)
 			else
-
+				ui.HeaderSizes = GTetris.IncFV(ui.HeaderSizes, -ui.HeaderInc, 0, headerTall)
 			end
+			ui.Header:SetTall(ui.HeaderSizes)
+			ui.Footer:SetTall(ui.HeaderSizes)
+			ui.Footer:SetY(scrh - ui.HeaderSizes)
 		end
 
 		ui.ToggleHeaders = function(toggle)
 			ui.HeaderDisplaying = toggle
 		end
 
-		for _, btn in ipairs(buttons) do
+		local MainUI = ui.SetupScene(GTetris.UI_MAIN)
+		ui.SwitchScene(GTetris.UI_MAIN)
+		ui.Logo = GTetris.CreatePanelMatAuto(MainUI, (scrw - ui.LogoSize) * 0.5, scrh * 0.125, ui.LogoSize, ui.LogoSize, "gtetris/logo.png", color_white)
 
+		local StartY = ui.Logo:GetY() + ui.Logo:GetTall() + ScreenScaleH(16)
+		local StartX = scrh * 0.33
+		local maxoffset = ScreenScaleH(70)
+		local offset_step = ScreenScaleH(4)
+		local margin = ScreenScaleH(12)
+		for _, btn in ipairs(buttons) do
+			local base = GTetris.CreatePanel(MainUI, StartX, StartY, scrw, buttonTall, Color(30, 30, 30, 255))
+			local icon = GTetris.CreatePanelMatAuto(base, margin, margin, buttonTall - margin * 2, buttonTall - margin * 2, btn.icon, color_white)
+			local _, _, title = GTetris.CreateLabel(base, icon:GetX() + icon:GetWide() + gap, gap, btn.title, "GTetris_UIFontBig", color_white)
+			local _, _, desc = GTetris.CreateLabel(base, icon:GetX() + icon:GetWide() + gap, GTetris.NY(title), btn.desc, "GTetris_UIFontMedium", Color(255, 255, 255, 120))
+				base.Offset = 0
+				btn.func(ui)
+				base.ibutton = GTetris.ApplyIButton(base, function()
+					btn.clickfunc(ui)
+				end)
+				base.ibutton.Think = function()
+					if(base.ibutton:IsHovered()) then
+						base.Offset = GTetris.IncFV(base.Offset, (maxoffset - base.Offset) * 0.225, 0, maxoffset)
+					else
+						base.Offset = GTetris.IncFV(base.Offset, -base.Offset * 0.225, 0, maxoffset)
+					end
+					base:SetX(StartX - base.Offset)
+				end
+
+			StartY = StartY + buttonTall + ScreenScaleH(4)
 		end
 
 	GTetris.MainUI = ui
