@@ -8,3 +8,43 @@ function GTetris.TestCollision(board, shape, x, y)
 	end
 	return true
 end
+
+function GTetris.ClearRow(board, row, width)
+	for col = 0, width do
+		board[row][col] = 0
+	end
+end
+
+function GTetris.MoveRowDown(board, startfrom, width)
+	for i = startfrom, -20, -1 do
+		local pRow = i - 1
+		if(pRow <= -20) then
+			GTetris.ClearRow(board, i, width)
+		else
+			board[i] = table.Copy(board[pRow])
+		end
+	end
+end
+
+function GTetris.CheckClearLine(board, width, height)
+	local lineCleared = 0
+	for i = -20, height, 1 do
+		local rows = board[i]
+		if(!rows) then continue end
+		local clear = true
+		for col = 0, width do
+			local id = rows[col]
+			if(id == 0) then
+				clear = false
+			end
+		end
+		
+		if(clear && i > -20) then
+			GTetris.ClearRow(board, i, width)
+			GTetris.MoveRowDown(board, i, width)
+			lineCleared = lineCleared + 1
+		end
+	end
+
+	return lineCleared
+end

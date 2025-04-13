@@ -40,7 +40,6 @@ function GTetris.SetupBoardLayer(attachTo)
 			if(!IsValid(layer.Boards[boardID])) then return end
 			local board = layer.Boards[boardID]
 			for rows = 0, layer.BoardWidth - 1 do
-				print(rows)
 				for cols = -20, layer.BoardHeight - 1 do
 					if(!board.CurrentBoard[cols]) then
 						board.CurrentBoard[cols] = {}
@@ -152,10 +151,14 @@ function GTetris.SetupBoardLayer(attachTo)
 				board.Alive = true
 				board.CurrentBoard = {}
 
-				board.CurrentPiece = 1
-				board.CurrentPosition = {x = 0, y = 0}
-				board.CurrentRotationState = 1
+				board.CurrentRotationState = 4
 				board.CurrentSeed = GTetris.Rulesets.Seed
+				board.CurrentPieces = GTetris.GeneratePieces(GTetris.Rulesets.BagSystem, board.CurrentSeed)
+				board.CurrentPiece = board.CurrentPieces[1]
+				board.CurrentPosition = {x = math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[board.CurrentPiece]) * 0.5), y = 0}
+				board.CurrentHoldPiece = -1
+				board.HoldUsed = false
+
 				board.RotationRule = GTetris.Rulesets.SpinSystem
 
 				board.Index = layer.BoardIndex
@@ -246,12 +249,92 @@ function GTetris.SetupBoardLayer(attachTo)
 										end
 									end
 								end
+
+								if(layer.Amount <= 4 || board == layer.FocusingBoard) then
+									local nextPiece_Width = layer.BoardBlockSize * 5
+									local nextPiece_Height = board:GetTall() * 0.8
+									local x = board:GetX() + board:GetWide()
+									local y = board:GetY()
+									local piece_padding = BlockSize * 3
+									local tw, th = GTetris.GetTextSize("GTetris_UIFontMedium", "Next Pieces")
+									draw.RoundedBox(0, x, y, nextPiece_Width, nextPiece_Height, gridColor)
+									draw.DrawText("Next Pieces", "GTetris_UIFontMedium", x + nextPiece_Width * 0.5, 0, color_black, TEXT_ALIGN_CENTER)
+									x = x + lineSize * 2
+									y = y + th + lineSize
+									nextPiece_Width = nextPiece_Width - lineSize * 3
+									nextPiece_Height = nextPiece_Height - th - lineSize * 2
+									draw.RoundedBox(0, x, y, nextPiece_Width, nextPiece_Height, Color(0, 0, 0, 255))
+
+									y = y + BlockSize * 0.45
+
+									surface.SetMaterial(blockMat)
+
+									local count = 0
+									for num, piece in ipairs(board.CurrentPieces) do
+										if(num == 1) then continue end
+										local shape = GTetris.Blocks[piece][4]
+										local color = GTetris.Blocks_Colors[piece]
+										local draw_x = x + (nextPiece_Width - (GTetris.BlockWidth[piece] * BlockSize)) * 0.5
+										surface.SetDrawColor(color.r, color.g, color.b, color.a)
+										for _, shape in ipairs(shape) do
+											local x = shape[1] * BlockSize + draw_x
+											surface.DrawTexturedRect(x, y + shape[2] * BlockSize + (count * piece_padding), BlockSize, BlockSize)
+										end
+										count = count + 1
+										if(count >= 5) then
+											break
+										end
+									end
+
+									x = board:GetX()
+									y = board:GetY()
+									local nextPiece_Width = layer.BoardBlockSize * 5
+									local nextPiece_Height = layer.BoardBlockSize * 4
+									local tw, th = GTetris.GetTextSize("GTetris_UIFontMedium", "Hold Piece")
+									draw.RoundedBox(0, x - nextPiece_Width, y, nextPiece_Width, nextPiece_Height, gridColor)
+									draw.DrawText("Hold Piece", "GTetris_UIFontMedium", x - nextPiece_Width * 0.5, 0, color_black, TEXT_ALIGN_CENTER)
+									x = x - nextPiece_Width + lineSize * 2
+									y = y + th + lineSize
+									nextPiece_Width = nextPiece_Width - lineSize * 3
+									nextPiece_Height = nextPiece_Height - th - lineSize * 2
+									draw.RoundedBox(0, x, y, nextPiece_Width, nextPiece_Height, Color(0, 0, 0, 255))
+									y = y + BlockSize * 0.5
+									if(board.CurrentHoldPiece != -1) then
+										local shape = GTetris.Blocks[board.CurrentHoldPiece][4]
+										local color = GTetris.Blocks_Colors[board.CurrentHoldPiece]
+										local draw_x = x + (nextPiece_Width - (GTetris.BlockWidth[board.CurrentHoldPiece] * BlockSize)) * 0.5
+										if(!board.HoldUsed) then
+											surface.SetDrawColor(color.r, color.g, color.b, color.a)
+										else
+											surface.SetDrawColor(100, 100, 100, 255)
+										end
+										for _, shape in ipairs(shape) do
+											local x = shape[1] * BlockSize + draw_x
+											surface.DrawTexturedRect(x, y + shape[2] * BlockSize, BlockSize, BlockSize)
+										end
+									end
+								end
+
 								for i = 0, layer.BoardWidth do
 									draw_RoundedBox(0, i * BlockSize, 0, lineSize, lineTall, gridColor)
 								end
 								for i = 0, layer.BoardHeight do
 									draw_RoundedBox(0, 0, i * BlockSize, totalWide, lineSize, gridColor)
 								end
+
+							if(board == layer.FocusingBoard) then
+								local PlaceY = GTetris.TraceToBottom(board)
+								local shape = GTetris.Blocks[board.CurrentPiece][board.CurrentRotationState]
+								local origin = board.CurrentPosition
+								local color = GTetris.Blocks_Colors[board.CurrentPiece]
+								surface.SetMaterial(blockMat)
+								surface.SetDrawColor(color.r, color.g, color.b, 50)
+								for _, block in ipairs(shape) do
+									local x = (block[1] + origin.x) * BlockSize
+									local y = (block[2] + PlaceY) * BlockSize
+									surface.DrawTexturedRect(x, y, BlockSize, BlockSize)
+								end
+							end
 
 							if(board.Alive) then
 								local origin, shape, rotation = board.CurrentPosition, GTetris.Blocks[board.CurrentPiece], board.CurrentRotationState

@@ -1,6 +1,6 @@
-GTetris.Input_DAS = 0.167
-GTetris.Input_ARR = 0.033
-GTetris.Input_SDF = 10
+GTetris.Input_DAS = 0.115
+GTetris.Input_ARR = 0
+GTetris.Input_SDF = 50
 
 local keyStates = {}
 local currentDAS = 0
@@ -33,9 +33,9 @@ end
 function GTetris.RotateLeft(localplayer)
 	local origin = localplayer.CurrentPosition
 	local CurrentState = localplayer.CurrentRotationState
-	local WishState = CurrentState + 1
-	if(WishState > 4) then
-		WishState = 1
+	local WishState = CurrentState + -1
+	if(WishState < 1) then
+		WishState = 4
 	end
 	if(GTetris.ProcessRotation(
 		localplayer.CurrentBoard,
@@ -49,14 +49,15 @@ function GTetris.RotateLeft(localplayer)
 	)) then
 		localplayer.CurrentRotationState = WishState
 	end
+	localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
 end
 
 function GTetris.RotateRight(localplayer)
 	local origin = localplayer.CurrentPosition
 	local CurrentState = localplayer.CurrentRotationState
-	local WishState = CurrentState - 1
-	if(WishState < 1) then
-		WishState = 4
+	local WishState = CurrentState + 1
+	if(WishState > 4) then
+		WishState = 1
 	end
 	local newShape = GTetris.Blocks[localplayer.CurrentPiece][WishState]
 	if(GTetris.ProcessRotation(
@@ -71,6 +72,7 @@ function GTetris.RotateRight(localplayer)
 	)) then
 		localplayer.CurrentRotationState = WishState
 	end
+	localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
 end
 
 function GTetris.Rotate180(localplayer)
@@ -96,10 +98,30 @@ function GTetris.Rotate180(localplayer)
 	)) then
 		localplayer.CurrentRotationState = WishState
 	end
+	localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
 end
 
 function GTetris.Hold(localplayer)
-
+	if(localplayer.HoldUsed) then return end
+	if(localplayer.CurrentHoldPiece != -1) then
+		local oldFirstPiece = localplayer.CurrentPiece
+		local newFirstPiece = localplayer.CurrentHoldPiece
+		localplayer.CurrentHoldPiece = oldFirstPiece
+		localplayer.CurrentPiece = newFirstPiece
+	else
+		localplayer.CurrentHoldPiece = localplayer.CurrentPiece
+		table.remove(localplayer.CurrentPieces, 1)
+		localplayer.CurrentPiece = localplayer.CurrentPieces[1]
+		if(#localplayer.CurrentPieces <= 6) then
+			local newPieces = GTetris.GeneratePieces(GTetris.Rulesets.BagSystem, localplayer.CurrentSeed)
+			table.Add(localplayer.CurrentPieces, newPieces)
+			localplayer.CurrentSeed = localplayer.CurrentSeed + 1
+		end
+	end
+	localplayer.CurrentPosition.x = math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[localplayer.CurrentPiece]) / 2)
+	localplayer.CurrentPosition.y = 0
+	localplayer.CurrentRotationState = 4
+	localplayer.HoldUsed = true
 end
 
 function GTetris.Softdrop(localplayer)
@@ -115,13 +137,17 @@ hook.Add("Think", "GTetris_InputHandler", function()
 		if(input.IsKeyDown(keycode)) then
 			if(!keyStates[key]) then
 				keyStates[key] = true
-				if(currentDAS < systime) then
-					GTetris[key](localplayer)
-					currentDAS = systime + GTetris.Input_DAS
-				end
+				GTetris[key](localplayer)
+				currentDAS = systime + GTetris.Input_DAS
 			end
 			if(currentDAS < systime && currentARR < systime) then
-				GTetris[key](localplayer)
+				if(GTetris.Input_ARR <= 0) then
+					for i = 1, GTetris.Rulesets.Width do
+						GTetris[key](localplayer)
+					end
+				else
+					GTetris[key](localplayer)
+				end
 				currentARR = systime + GTetris.Input_ARR
 			end
 		else
@@ -145,7 +171,13 @@ hook.Add("Think", "GTetris_InputHandler", function()
 	end
 	if(input.IsKeyDown(GTetris.Keys.Softdrop)) then
 		if(currentSDF < systime) then
-			GTetris.Softdrop(localplayer)
+			if(GTetris.Input_SDF >= 50) then
+				for i = 1, GTetris.Rulesets.Height do
+					GTetris.Softdrop(localplayer)
+				end
+			else
+				GTetris.Softdrop(localplayer)
+			end
 			currentSDF = systime + (1 / GTetris.Input_SDF)
 		end
 	end

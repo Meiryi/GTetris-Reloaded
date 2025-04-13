@@ -30,4 +30,20 @@ function GTetris.PlacePiece(localplayer)
 		local y = block[2] + PlaceY
 		board[y][x] = localplayer.CurrentPiece
 	end
+
+	table.remove(localplayer.CurrentPieces, 1)
+	localplayer.CurrentPiece = localplayer.CurrentPieces[1]
+	localplayer.CurrentPosition.x = math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[localplayer.CurrentPiece]) / 2)
+	localplayer.CurrentPosition.y = 0
+	localplayer.CurrentRotationState = 4
+
+	if(#localplayer.CurrentPieces <= 6) then
+		local newPieces = GTetris.GeneratePieces(GTetris.Rulesets.BagSystem, localplayer.CurrentSeed)
+		table.Add(localplayer.CurrentPieces, newPieces)
+		localplayer.CurrentSeed = localplayer.CurrentSeed + 1
+	end
+
+	local lineCleared = GTetris.CheckClearLine(localplayer.CurrentBoard, GTetris.Rulesets.Width - 1, GTetris.Rulesets.Height - 1)
+	localplayer.Bonus = false
+	localplayer.HoldUsed = false
 end
