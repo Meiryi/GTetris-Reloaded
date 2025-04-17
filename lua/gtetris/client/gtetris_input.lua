@@ -19,15 +19,35 @@ local oneShotKeys = {
 }
 
 function GTetris.Left(localplayer)
-	GTetris.MovePiece(localplayer, -1, 0)
+	if(GTetris.MovePiece(localplayer, -1, 0)) then
+		GTetris.PieceMoved(localplayer)
+	end
 end
 
 function GTetris.Right(localplayer)
-	GTetris.MovePiece(localplayer, 1, 0)
+	if(GTetris.MovePiece(localplayer, 1, 0)) then
+		GTetris.PieceMoved(localplayer)
+	end
 end
 
 function GTetris.Drop(localplayer)
 	GTetris.PlacePiece(localplayer)
+end
+
+function GTetris.PieceRotated(localplayer)
+	GTetris.RotateSound(localplayer.Bonus, 4)
+	GTetris.SyncPieceStates(localplayer)
+end
+
+function GTetris.PieceMoved(localplayer, nosound)
+	if(!nosound) then
+		GTetris.MoveSound(4)
+	end
+	GTetris.SyncPieceStates(localplayer)
+end
+
+function GTetris.PieceSoftdrop(localplayer)
+	
 end
 
 function GTetris.RotateLeft(localplayer)
@@ -48,8 +68,9 @@ function GTetris.RotateLeft(localplayer)
 		localplayer
 	)) then
 		localplayer.CurrentRotationState = WishState
+		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
+		GTetris.PieceRotated(localplayer)
 	end
-	localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
 end
 
 function GTetris.RotateRight(localplayer)
@@ -71,8 +92,9 @@ function GTetris.RotateRight(localplayer)
 		localplayer
 	)) then
 		localplayer.CurrentRotationState = WishState
+		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
+		GTetris.PieceRotated(localplayer)
 	end
-	localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
 end
 
 function GTetris.Rotate180(localplayer)
@@ -97,8 +119,9 @@ function GTetris.Rotate180(localplayer)
 		localplayer
 	)) then
 		localplayer.CurrentRotationState = WishState
+		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
+		GTetris.PieceRotated(localplayer)
 	end
-	localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
 end
 
 function GTetris.Hold(localplayer)
@@ -119,13 +142,19 @@ function GTetris.Hold(localplayer)
 		end
 	end
 	localplayer.CurrentPosition.x = math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[localplayer.CurrentPiece]) / 2)
-	localplayer.CurrentPosition.y = 0
+	localplayer.CurrentPosition.y = -2
 	localplayer.CurrentRotationState = 4
 	localplayer.HoldUsed = true
+	GTetris.HoldSound(4)
+	GTetris.PieceResetted(localplayer)
+	GTetris.SyncPieceStates(localplayer)
 end
 
 function GTetris.Softdrop(localplayer)
-	GTetris.MovePiece(localplayer, 0, 1)
+	if(GTetris.MovePiece(localplayer, 0, 1)) then
+		GTetris.SoftDropSound(4)
+		GTetris.SyncPieceStates(localplayer)
+	end
 end
 
 hook.Add("Think", "GTetris_InputHandler", function()

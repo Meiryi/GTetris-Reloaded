@@ -18,7 +18,8 @@ local buttons = {
 			local BaseUI = ui.GetScene(GTetris.UI_SINGLEPLAYER)
 			ui.SwitchScene(GTetris.UI_SINGLEPLAYER)
 			GTetris.SetupBoardLayer(BaseUI)
-			GTetris.CreateBoard(LocalPlayer():SteamID64(), true)
+			local board = GTetris.CreateBoard(LocalPlayer():SteamID64(), true)
+			board.PlayerNick = LocalPlayer():Nick()
 			GTetris.SortBoards(true)
 			GTetris.AddBackButton(BaseUI, function()
 				ui.SwitchScene(GTetris.UI_MAIN)
@@ -35,6 +36,7 @@ local buttons = {
 		end,
 		clickfunc = function(ui)
 			local BaseUI = ui.GetScene(GTetris.UI_MULTIPLAYER)
+			GTetris.MultiplayerUI(BaseUI)
 			ui.SwitchScene(GTetris.UI_MULTIPLAYER)
 			GTetris.AddBackButton(BaseUI, function()
 				ui.SwitchScene(GTetris.UI_MAIN)

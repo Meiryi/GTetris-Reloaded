@@ -1,9 +1,33 @@
+function GTetris.AddBoardText(board, x, y, num, cancel)
+	if(num <= 0) then return end
+	table.insert(board.Numbers, {
+		x = x,
+		y = y,
+		num = num,
+		cancel = cancel,
+		time = SysTime() + 1,
+		alpha = 0,
+		scale = 0,
+		rotation = math.random(-20, 20),
+	})
+end
+
+function GTetris.ReceiveAttack(amount)
+	local localplayer = GTetris.GetLocalPlayer()
+	if(!IsValid(localplayer)) then return end
+	table.insert(localplayer.ReceivedAttacks, {
+		amount = amount,
+		time = SysTime() + GTetris.Rulesets.AttackApplyDelay,
+	})
+end
+
 function GTetris.MovePiece(localplayer, x, y)
 	local origin = localplayer.CurrentPosition
 	local shape = GTetris.Blocks[localplayer.CurrentPiece][localplayer.CurrentRotationState]
 	if(GTetris.TestCollision(localplayer.CurrentBoard, shape, origin.x + x, origin.y + y)) then
 		localplayer.CurrentPosition.x = origin.x + x
 		localplayer.CurrentPosition.y = origin.y + y
+		return true
 	end
 end
 
@@ -31,19 +55,118 @@ function GTetris.PlacePiece(localplayer)
 		board[y][x] = localplayer.CurrentPiece
 	end
 
-	table.remove(localplayer.CurrentPieces, 1)
-	localplayer.CurrentPiece = localplayer.CurrentPieces[1]
-	localplayer.CurrentPosition.x = math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[localplayer.CurrentPiece]) / 2)
-	localplayer.CurrentPosition.y = 0
-	localplayer.CurrentRotationState = 4
-
 	if(#localplayer.CurrentPieces <= 6) then
 		local newPieces = GTetris.GeneratePieces(GTetris.Rulesets.BagSystem, localplayer.CurrentSeed)
 		table.Add(localplayer.CurrentPieces, newPieces)
 		localplayer.CurrentSeed = localplayer.CurrentSeed + 1
 	end
 
-	local lineCleared = GTetris.CheckClearLine(localplayer.CurrentBoard, GTetris.Rulesets.Width - 1, GTetris.Rulesets.Height - 1)
+	local lineCleared = GTetris.CheckClearLine(board, GTetris.Rulesets.Width - 1, GTetris.Rulesets.Height - 1)
+	local attacks = 0
+
+	if(lineCleared > 0) then
+		local bonus = (localplayer.Bonus || lineCleared >= 4)
+		localplayer.CurrentCombo = localplayer.CurrentCombo + 1
+		if(bonus) then
+			localplayer.CurrentB2B = localplayer.CurrentB2B + 1
+			if(localplayer.CurrentCombo >= 2) then
+				localplayer.ClearlineBonus = true
+			end
+		else
+			localplayer.CurrentB2B = 0
+			attacks = attacks + GTetris.OnB4BChainBreak(localplayer.CurrentB2B, GTetris.Rulesets.B4BChargeAmount)
+		end
+	else
+		if(localplayer.CurrentCombo >= 3) then
+			GTetris.ComboBreakSound()
+			GTetris.OnComboBreak(localplayer.CurrentCombo)
+		end
+		localplayer.CurrentCombo = -1
+		localplayer.ClearlineBonus = false
+	end
+
+	attacks = attacks + GTetris.GetAttacks(lineCleared, math.max(localplayer.CurrentCombo, 0), localplayer.Bonus, localplayer.CurrentB2B, GTetris.Rulesets.ComboTable)
+
+	if(GTetris.CheckAllClear(board, GTetris.Rulesets.Width - 1, GTetris.Rulesets.Height - 1)) then
+		attacks = attacks + 10
+		GTetris.AllClearSound(2)
+		GTetris.InsertAllClears(localplayer.boardID)
+	end
+
+	if(attacks > 0) then
+		GTetris.ProcessAttacks(localplayer, attacks)
+	end
+
+	local canceled = 0
+	if(lineCleared > 0) then
+		GTetris.PlayClearSound(lineCleared, localplayer.Bonus, localplayer.CurrentCombo, localplayer.ClearlineBonus, 2)
+		GTetris.SetClearText(localplayer.boardID, lineCleared)
+		for _, attack in ipairs(localplayer.ReceivedAttacks) do
+			if(attack.amount <= attacks) then
+				local amount = attack.amount
+				attack.amount = math.max(amount - attacks, 0)
+				canceled = canceled + amount
+				attacks = attacks - amount
+			else
+				attack.amount = attack.amount - attacks
+				canceled = canceled + attacks
+				attacks = 0
+			end
+			if(attacks <= 0) then
+				break
+			end
+		end
+
+		for _, attack in next, localplayer.ReceivedAttacks do
+			if(attack.amount <= 0) then
+				table.remove(localplayer.ReceivedAttacks, _)
+			end
+		end
+	else
+		local moveup = GTetris.Rulesets.AttackCap
+		for _, attack in ipairs(localplayer.ReceivedAttacks) do
+			if(attack.amount <= moveup) then
+				GTetris.MoveRowUp(localplayer.CurrentBoard, attack.amount, GTetris.Rulesets.Width, GTetris.Rulesets.Height)
+				local amount = attack.amount
+				attack.amount = math.max(amount - moveup, 0)
+				moveup = moveup - amount
+			else
+				attack.amount = attack.amount - moveup
+				moveup = 0
+				GTetris.MoveRowUp(localplayer.CurrentBoard, moveup, GTetris.Rulesets.Width, GTetris.Rulesets.Height)
+			end
+			if(moveup <= 0) then
+				break
+			end
+		end
+
+		for _, attack in next, localplayer.ReceivedAttacks do
+			if(attack.amount <= 0) then
+				table.remove(localplayer.ReceivedAttacks, _)
+			end
+		end
+	end
+
+	GTetris.AddBoardText(localplayer, PlaceX, PlaceY, canceled, true)
+	GTetris.AddBoardText(localplayer, PlaceX, PlaceY, attacks, false)
+
+	if(localplayer.Bonus) then
+		GTetris.SetSpinText(localplayer.boardID, localplayer.CurrentPiece)
+	end
+
+	table.remove(localplayer.CurrentPieces, 1)
+	localplayer.CurrentPiece = localplayer.CurrentPieces[1]
+	localplayer.CurrentPosition.x = math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[localplayer.CurrentPiece]) / 2)
+	localplayer.CurrentPosition.y = -3
+	localplayer.CurrentRotationState = 4
 	localplayer.Bonus = false
 	localplayer.HoldUsed = false
+	GTetris.PlaceblockSound(4)
+	GTetris.PieceResetted(localplayer)
+	GTetris.SyncBoard(localplayer)
+	GTetris.SyncPieceStates(localplayer)
+end
+
+function GTetris.PieceResetted(localplayer)
+	localplayer.AutolockTime = GTetris.Rulesets.AutolockTime
 end

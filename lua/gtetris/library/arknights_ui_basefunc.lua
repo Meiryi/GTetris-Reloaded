@@ -210,6 +210,12 @@ function GTetris.CreateTextEntry(parent, x, y, w, h, placeholder, font, color, p
         text:SetPaintBackground(false)
         text:SetTextColor(color)
         text:SetFont(font)
+        text.oPaint = text.Paint
+        text.Paint2x = function() end
+        text.Paint = function()
+            text.oPaint(text)
+            text.Paint2x()
+        end
     return text
 end
 
@@ -222,7 +228,7 @@ function GTetris.CreatePanel(parent, x, y, w, h, color, r)
         panel.Paint2x = function() end
         panel.Paint = function()
             draw.RoundedBox(r, 0, 0, w, h, panel.color)
-            panel.Paint2x()
+            panel.Paint2x(panel)
         end
         panel:SetZPos(0)
     return panel
@@ -801,7 +807,7 @@ function GTetris.WaitingIndicator()
     local flash_interval = 0.75
     local flash_next_t = SysTime() + flash_interval
     local flash_target_s = static_flash_size * 4
-    local flashmat = GTetris.GetCachedMaterial("zombie scenario/system/white_t.png")
+    local flashmat = GTetris.GetCachedMaterial("gtetris/white_t.png")
     ui:SetZPos(32767)
     ui.Paint = function()
         if(!responded && !timedout) then

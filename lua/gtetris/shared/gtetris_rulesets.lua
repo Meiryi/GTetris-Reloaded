@@ -35,22 +35,16 @@ GTetris.Enums.AllowedSpins = {
 		value = GTetris.Enums.ALLOWEDSPINS_NONE,
 	},
 	{
-		title = "Stupid",
+		title = "Everything is a spin",
 		value = GTetris.Enums.ALLOWEDSPINS_STUPID,
 	},
 }
 
-
-GTetris.Enums.COMBOTABLE_TETRIO = 1
-GTetris.Enums.COMBOTABLE_MULTIPLIER = 2
-GTetris.Enums.COMBOTABLE_INCREMENT = 3
-GTetris.Enums.COMBOTABLE_SQUARING = 4
-GTetris.Enums.COMBOTABLE_NONE = 5
+GTetris.Enums.COMBOTABLE_MULTIPLIER = 1
+GTetris.Enums.COMBOTABLE_INCREMENT = 2
+GTetris.Enums.COMBOTABLE_SQUARING = 3
+GTetris.Enums.COMBOTABLE_NONE = 4
 GTetris.Enums.ComboTables = {
-	{
-		title = "Tetr.io",
-		value = GTetris.Enums.COMBOTABLE_TETRIO,
-	},
 	{
 		title = "Multiplier",
 		value = GTetris.Enums.COMBOTABLE_MULTIPLIER,
@@ -113,7 +107,7 @@ GTetris.Rulesets = {}
 -- Gameplay
 GTetris.Rulesets.Width = 10
 GTetris.Rulesets.Height = 20
-GTetris.Rulesets.Gravity = 2
+GTetris.Rulesets.Gravity = 0
 GTetris.Rulesets.AutolockTime = 1
 GTetris.Rulesets.BagSystem = GTetris.Enums.BAGSYS_7BAG
 GTetris.Rulesets.Seed = 1024
@@ -130,12 +124,12 @@ GTetris.Rulesets.AttackArriveTime = 0.25
 GTetris.Rulesets.AttackApplyDelay = 0.5
 GTetris.Rulesets.AttackCap = 8
 GTetris.Rulesets.AttacksEntry = GTetris.Enums.ATTACKENTRY_INSTANT
-GTetris.Rulesets.ComboTable = GTetris.Enums.COMBOTABLE_TETRIO
+GTetris.Rulesets.ComboTable = GTetris.Enums.COMBOTABLE_MULTIPLIER
 
 GTetris.Rulesets.Default = {}
 GTetris.Rulesets.Default.Width = 10
 GTetris.Rulesets.Default.Height = 20
-GTetris.Rulesets.Default.Gravity = 2
+GTetris.Rulesets.Default.Gravity = 0
 GTetris.Rulesets.Default.AutolockTime = 1
 GTetris.Rulesets.Default.BagSystem = GTetris.Enums.BAGSYS_7BAG
 GTetris.Rulesets.Default.Seed = 1024
@@ -152,7 +146,7 @@ GTetris.Rulesets.Default.AttackArriveTime = 0.25
 GTetris.Rulesets.Default.AttackApplyDelay = 0.5
 GTetris.Rulesets.Default.AttackCap = 8
 GTetris.Rulesets.Default.AttacksEntry = GTetris.Enums.ATTACKENTRY_INSTANT
-GTetris.Rulesets.Default.ComboTable = GTetris.Enums.COMBOTABLE_TETRIO
+GTetris.Rulesets.Default.ComboTable = GTetris.Enums.COMBOTABLE_MULTIPLIER
 
 function GTetris.ApplyRulesets(rulesets)
 	for key, value in pairs(rulesets) do

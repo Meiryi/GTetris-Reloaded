@@ -39,5 +39,160 @@ function GTetris.AddBackButton(parent, func)
 end
 
 function GTetris.DestroyLastBackButton()
+	if(!IsValid(GTetris.LastBackButton)) then return end
 	GTetris.LastBackButton.Exiting = true
+end
+
+local white = Color(200, 200, 200, 255)
+function GTetris.InsertOptionTitle(parent, title)
+	local gap = ScreenScaleH(4)
+	local _, _, title = GTetris.CreateLabel(parent, gap, gap, title, "GTetris_OptionsTitle", white)
+	title:Dock(TOP)
+	title:DockMargin(gap, gap, 0, ScreenScaleH(2))
+end
+
+function GTetris.InsertOptionDesc(parent, title)
+	local gap = ScreenScaleH(4)
+	local _, _, title = GTetris.CreateLabel(parent, gap, gap, title, "GTetris_OptionsDesc.5x", white)
+	title:Dock(TOP)
+	title:DockMargin(gap * 2, gap, 0, ScreenScaleH(2))
+end
+
+function GTetris.InsertOptionLine(parent)
+	local gap = ScreenScaleH(4)
+	local line = GTetris.CreatePanel(parent, gap, 0, parent:GetWide() - (gap * 2), ScreenScaleH(1), Color(200, 200, 200, 50))
+	line:Dock(TOP)
+	line:DockMargin(gap, ScreenScaleH(2), 0, ScreenScaleH(2))
+end
+
+function GTetris.InsertOptionGap(parent, height)
+	local gap = ScreenScaleH(4)
+	local line = GTetris.CreatePanel(parent, 0, 0, gap, ScreenScaleH(height), color_transparent)
+	line:Dock(TOP)
+end
+
+local addSymbol = function(self, symbol)
+	local _, _, symbol = GTetris.CreateLabel(self, self:GetWide() * 0.5, self:GetTall() * 0.5, symbol, "GTetris_OptionsDesc", Color(200, 200, 200, 255))
+	symbol.CentPos()
+end
+local outlineFunc = function(self)
+	surface.SetDrawColor(200, 200, 200, 255)
+	surface.DrawOutlinedRect(0, 0, self:GetWide(), self:GetTall(), ScreenScaleH(1))
+end
+
+function GTetris.InsertValueChanger(parent, text, pointer, mins, maxs, add, func)
+	local gap = ScreenScaleH(4)
+	local base = GTetris.CreatePanel(parent, 0, 0, parent:GetWide() - gap * 2, ScreenScaleH(18), Color(100, 100, 255, 0))
+		base:Dock(TOP)
+		base:DockMargin(gap, 0, 0, ScreenScaleH(2))
+		local size = base:GetTall()
+		local dec = GTetris.CreatePanel(base, 0, 0, size, size, Color(15, 15, 15, 255))
+		addSymbol(dec, "-")
+		dec.Paint2x = outlineFunc
+		dec.DASTime = 0
+		dec.ARRTime = 0
+		dec.OldKeyState = false
+		dec.Think = function()
+			if(!GTetris.IsRoomHost()) then return end
+			if(dec:IsHovered()) then
+				local keystate = input.IsMouseDown(MOUSE_LEFT)
+				local systime = SysTime()
+				local value = GTetris.GetPointerValue(GTetris, pointer)
+				if(keystate && !dec.OldKeyState) then
+					GTetris.SetPointerValue(GTetris, pointer, math.Round(math.Clamp(value - add, mins, maxs), 2))
+					func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+					dec.DASTime = systime + 0.15
+				end
+				if(keystate && dec.ARRTime < systime && dec.DASTime < systime) then
+					GTetris.SetPointerValue(GTetris, pointer, math.Round(math.Clamp(value - add, mins, maxs), 2))
+					func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+					dec.ARRTime = systime + 0.077
+				end
+				dec.OldKeyState = keystate
+			else
+				dec.OldKeyState = false
+			end
+		end
+
+		local inc = GTetris.CreatePanel(base, dec:GetX() + dec:GetWide() + gap, 0, size, size, Color(15, 15, 15, 255))
+		addSymbol(inc, "+")
+		inc.Paint2x = outlineFunc
+		inc.DASTime = 0
+		inc.ARRTime = 0
+		inc.OldKeyState = false
+		inc.Think = function()
+			if(!GTetris.IsRoomHost()) then return end
+			if(inc:IsHovered()) then
+				local keystate = input.IsMouseDown(MOUSE_LEFT)
+				local systime = SysTime()
+				local value = GTetris.GetPointerValue(GTetris, pointer)
+				if(keystate && !inc.OldKeyState) then
+					GTetris.SetPointerValue(GTetris, pointer, math.Round(math.Clamp(value + add, mins, maxs), 2))
+					func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+					inc.DASTime = systime + 0.15
+				end
+				if(keystate && inc.ARRTime < systime && inc.DASTime < systime) then
+					GTetris.SetPointerValue(GTetris, pointer, math.Round(math.Clamp(value + add, mins, maxs), 2))
+					func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+					inc.ARRTime = systime + 0.077
+				end
+				inc.OldKeyState = keystate
+			else
+				inc.OldKeyState = false
+			end
+		end
+
+		local _, _, title = GTetris.CreateLabel(base, inc:GetX() + inc:GetWide() + gap, base:GetTall() * 0.5, "", "GTetris_OptionsDesc", white)
+			title.CentVer()
+			title.Think = function()
+				local str = text.." : "..math.Round(GTetris.GetPointerValue(GTetris, pointer), 2)
+				title.UpdateText(str)
+			end
+end
+
+function GTetris.InsertValueCheckBox(parent, text, pointer, value, func)
+	local gap = ScreenScaleH(4)
+	local innergap = ScreenScaleH(3)
+	local base = GTetris.CreatePanel(parent, 0, 0, parent:GetWide() - gap * 2, ScreenScaleH(18), Color(100, 100, 255, 0))
+		base:Dock(TOP)
+		base:DockMargin(gap, 0, 0, ScreenScaleH(2))
+
+		local size = base:GetTall() - innergap * 2
+		local button = GTetris.CreatePanel(base, innergap, innergap, size, size, color_transparent)
+		button.Paint2x = function()
+			if(GTetris.GetPointerValue(GTetris, pointer) == value) then
+				draw.RoundedBox(0, 0, 0, size, size, white)
+			end
+			outlineFunc(button)
+		end
+		function button:OnMousePressed()
+			if(!GTetris.IsRoomHost()) then return end
+			GTetris.SetPointerValue(GTetris, pointer, value)
+			func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+		end
+		local _, _, text = GTetris.CreateLabel(base, button:GetX() + button:GetWide() + gap, base:GetTall() * 0.5, text, "GTetris_OptionsDesc", white)
+			text.CentVer()
+end
+function GTetris.InsertValueToggleBox(parent, text, pointer, func)
+	local gap = ScreenScaleH(4)
+	local innergap = ScreenScaleH(3)
+	local base = GTetris.CreatePanel(parent, 0, 0, parent:GetWide() - gap * 2, ScreenScaleH(18), Color(100, 100, 255, 0))
+		base:Dock(TOP)
+		base:DockMargin(gap, 0, 0, ScreenScaleH(2))
+
+		local size = base:GetTall() - innergap * 2
+		local button = GTetris.CreatePanel(base, innergap, innergap, size, size, color_transparent)
+		button.Paint2x = function()
+			if(GTetris.GetPointerValue(GTetris, pointer) == true) then
+				draw.RoundedBox(0, 0, 0, size, size, white)
+			end
+			outlineFunc(button)
+		end
+		function button:OnMousePressed()
+			if(!GTetris.IsRoomHost()) then return end
+			GTetris.SetPointerValue(GTetris, pointer, !GTetris.GetPointerValue(GTetris, pointer))
+			func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+		end
+		local _, _, text = GTetris.CreateLabel(base, button:GetX() + button:GetWide() + gap, base:GetTall() * 0.5, text, "GTetris_OptionsDesc", white)
+			text.CentVer()
 end
