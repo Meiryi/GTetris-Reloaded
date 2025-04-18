@@ -10,6 +10,10 @@ function GTetris.AddBoardText(board, x, y, num, cancel)
 		scale = 0,
 		rotation = math.random(-20, 20),
 	})
+
+	if(board == GTetris.GetLocalPlayer()) then
+		GTetris.SendBoardTexts(x, y, num, cancel)
+	end
 end
 
 function GTetris.ReceiveAttack(amount)
@@ -91,6 +95,7 @@ function GTetris.PlacePiece(localplayer)
 		attacks = attacks + 10
 		GTetris.AllClearSound(2)
 		GTetris.InsertAllClears(localplayer.boardID)
+		GTetris.SendAllClear()
 	end
 
 	if(attacks > 0) then
@@ -100,6 +105,7 @@ function GTetris.PlacePiece(localplayer)
 	local canceled = 0
 	if(lineCleared > 0) then
 		GTetris.PlayClearSound(lineCleared, localplayer.Bonus, localplayer.CurrentCombo, localplayer.ClearlineBonus, 2)
+		GTetris.SendClearLineInfo(localplayer.CurrentPiece, lineCleared, localplayer.Bonus, localplayer.CurrentCombo, localplayer.ClearlineBonus)
 		GTetris.SetClearText(localplayer.boardID, lineCleared)
 		for _, attack in ipairs(localplayer.ReceivedAttacks) do
 			if(attack.amount <= attacks) then
@@ -147,6 +153,10 @@ function GTetris.PlacePiece(localplayer)
 		end
 	end
 
+	if(attacks > 0) then
+		GTetris.SendAttacks(attacks, PlaceX, PlaceY)
+	end
+
 	GTetris.AddBoardText(localplayer, PlaceX, PlaceY, canceled, true)
 	GTetris.AddBoardText(localplayer, PlaceX, PlaceY, attacks, false)
 
@@ -165,6 +175,9 @@ function GTetris.PlacePiece(localplayer)
 	GTetris.PieceResetted(localplayer)
 	GTetris.SyncBoard(localplayer)
 	GTetris.SyncPieceStates(localplayer)
+	GTetris.SyncNextPieces(localplayer)
+	GTetris.SyncBoardInfo(localplayer)
+	GTetris.SyncReceivedAttacks(localplayer)
 end
 
 function GTetris.PieceResetted(localplayer)

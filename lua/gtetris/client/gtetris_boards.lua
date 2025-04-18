@@ -1,5 +1,53 @@
 GTetris.BoardLayer = GTetris.BoardLayer || {}
 
+function GTetris.GetAngle(p1, p2)
+	local ang = math.atan2(p2.y - p1.y, p1.x - p2.x)
+	local deg = math.deg(ang)
+	return deg + 90
+end
+
+function GTetris.TraceLinear(p1, p2, t)
+	local x, y = p2.x - p1.x, p2.y - p1.y
+	return Vector(p1.x + x * t, p1.y + y * t, 0)
+end
+
+function GTetris.CircumCircle(p, t)
+	local a0, a1 ,c0, c1, det, asq, csq, ctr0, ctr1, rad2
+
+	a0 = p[1].x - p[2].x
+	a1 = p[1].y - p[2].y
+
+	c0 = p[3].x - p[2].x
+	c1 = p[3].y - p[2].y
+
+	det = a0 * c1 - c0 * a1
+
+	if(det == 0) then return false end
+	det = 0.5 / det
+	asq = a0 * a0 + a1 * a1
+	csq = c0 * c0 + c1 * c1
+	ctr0 = det * (asq * c1 - csq * a1)
+	ctr1 = det * (csq * a0 - asq * c0)
+	rad2 = ctr0 * ctr0 + ctr1 * ctr1
+
+	local pos = {x = ctr0 + p[2].x, y = ctr1 + p[2].y}
+	local sta, eda = math.floor(math.deg(math.atan2(pos.y - p[1].y, p[1].x - pos.x)) + 90) ,math.floor(math.deg(math.atan2(pos.y - p[3].y, p[3].x - pos.x)) + 90)
+	local segs = sta - eda
+	local step1 = 1
+	local r = math.sqrt(rad2)
+	if(sta > eda) then
+		step1 = -1
+	end
+	local ta = {}
+	for i = sta, eda, step1 do
+		local a = math.rad(i)
+		table.insert(ta, {x = pos.x + math.sin( a ) * r, y = pos.y + math.cos( a ) * r, Color(0, 0, 255, 255)})
+	end
+
+	local inx = math.max(math.floor(#ta * t), 1)
+	return ta[inx]
+end
+
 local draw_RoundedBox = draw.RoundedBox
 local blockMat = Material("gtetris/block.png")
 local allclearMat = Material("gtetris/allclear.png")
@@ -19,6 +67,8 @@ function GTetris.SetupBoardLayer(attachTo)
 		layer.BoardWide = layer.BoardBlockSize * layer.BoardWidth
 		layer.BoardTall = layer.BoardBlockSize * layer.BoardHeight
 		layer.InputBlockTime = 0
+		layer.AnimLayer = GTetris.CreateFrame(layer, 0, 0, scrw, scrh, color_transparent)
+		layer.AnimLayer:SetZPos(32767)
 
 		layer.GetLocalPlayer = function()
 			local localply = layer.Boards[LocalPlayer():SteamID64()]
@@ -52,7 +102,7 @@ function GTetris.SetupBoardLayer(attachTo)
 		end
 
 		layer.Sorting = false
-		layer.SortingTime = 0.45
+		layer.SortingTime = 0.33
 		layer.CurrentSortingTime = 0
 		layer.SortBoards = function(instant)
 			layer.CurrentSortingTime = SysTime() + layer.SortingTime
@@ -78,8 +128,8 @@ function GTetris.SetupBoardLayer(attachTo)
 			pad_offset = (scrh * 0.5) * (1 - scale)
 
 			for _, board in pairs(layer.Boards) do
-				board.PreSortPosX = board:GetX()
-				board.PreSortPosY = board:GetY()
+				board.PreSortPosX = board:GetX() + (board.CurrentXOffset || 0)
+				board.PreSortPosY = board:GetY() + (board.CurrentYOffset || 0)
 				if(amount <= 1) then
 					board.TargetScale = 1
 					board.TargetX = centerX - board:GetWide() * 0.5
@@ -136,6 +186,83 @@ function GTetris.SetupBoardLayer(attachTo)
 			end
 		end
 
+		layer.AttackTracers = {}
+		layer.Particles = {}
+		layer.InsertAttackTrace = function(from, to)
+			from = Vector(from.x, from.y, 0)
+			to = Vector(to.x, to.y, 0)
+			local offset = from - to
+			local _3rdvector = (from + offset * 0.5) + Vector(0, offset.y * math.Rand(-0.5, 0.5), 0)
+			local targetTime = GTetris.Rulesets.AttackArriveTime
+			table.insert(layer.AttackTracers, {
+				v1 = from,
+				v2 = _3rdvector,
+				v3 = to,
+				alpha = 255,
+				time = SysTime() + targetTime,
+				wscale = 0.5,
+				hscale = 1,
+				sx = ScreenScale(16),
+				rotate = GTetris.GetAngle(from, _3rdvector),
+				oldvec = from,
+				trans = 0,
+				target_trans = targetTime,
+			})
+		end
+
+		local tracerMaterial = Material("gtetris/garbageparticle.png", "smooth")
+		layer.AnimLayer.Paint = function()
+			surface.SetMaterial(tracerMaterial)
+			for k,v in next, layer.Particles do
+				if(v.time < SysTime()) then
+					table.remove(layer.Particles, k)
+				end
+				local t = math.max(v.time - SysTime(), 0) / v.target_trans
+				surface.SetDrawColor(255, 155, 155, v.alpha * t)
+				surface.DrawTexturedRectRotated(v.vec.x, v.vec.y, (v.sx * t) * v.ws, (v.sx * t) * v.hs, v.rotate)
+			end
+
+			for k,v in next, layer.AttackTracers do
+				if(v.time < SysTime()) then
+					v.alpha = math.Clamp(v.alpha - GTetris.GetFixedValue(20), 0, 255)
+					v.wscale = v.wscale + GTetris.GetFixedValue(0.05)
+					v.hscale = v.hscale + GTetris.GetFixedValue(0.05)
+					if(v.alpha <= 0) then
+						table.remove(layer.AttackTracers, k)
+					end
+				end
+
+				local t = math.max(v.time - SysTime(), 0.01) / v.target_trans
+				--local vec = GTetris:CircumCircle({v.v1, v.v2, v.v3}, 1 - t)
+				local vec = math.QuadraticBezier(1 - t, v.v1, v.v2, v.v3)
+				if(!vec) then continue end
+				surface.SetDrawColor(255, 70, 70, v.alpha)
+				surface.DrawTexturedRectRotated(vec.x, vec.y, (v.sx * 1.5) * v.wscale, (v.sx * 1.5) * v.hscale, v.rotate)
+
+				local dst = math.Distance(v.oldvec.x, v.oldvec.y, vec.x, vec.y)
+
+				if(dst > 0) then
+					v.rotate = GTetris.GetAngle(v.oldvec, vec)
+					local oldpos = v.oldvec
+					for i = 0, 1, 1 / dst do
+						local vec = GTetris.TraceLinear(v.oldvec, vec, i)
+						table.insert(layer.Particles, {
+							time = SysTime() + v.target_trans / 2,
+							target_trans = v.target_trans / 2,
+							rotate = v.rotate,
+							sx = v.sx * 0.6,
+							ws = v.wscale,
+							hs = v.hscale,
+							vec = vec,
+							alpha = 10,
+						})
+					end
+				end
+
+				v.oldvec = vec
+			end
+		end
+
 		layer.BoardIndex = 1
 		layer.CreateBoard = function(boardID, localplayer)
 			local board = GTetris.CreatePanel(layer, 0, 0, 1, 1, Color(255, 0, 0, 255))
@@ -173,6 +300,7 @@ function GTetris.SetupBoardLayer(attachTo)
 				board.CurrentB2BFlashTime = 0
 				board.AutolockTime = GTetris.Rulesets.AutolockTime
 				board.GravityTime = 0
+				board.ShakeScale = 0
 
 				board.LastSpin = ""
 
@@ -197,6 +325,32 @@ function GTetris.SetupBoardLayer(attachTo)
 
 				board.UpdateBoard = function()
 					board.ShouldRenderBoard = true
+				end
+
+				board.DeathAnimationY = 0
+				board.DeathAnimationYSpeed = 5
+				board.DeathAnimationRotation = 0
+				board.DeathAnimationRotationSide = false
+				board.StartDeathAnimation = function()
+					if(board == GTetris.GetLocalPlayer() || board == layer.FocusingBoard) then
+						GTetris.DeathSound(true, 4)
+					end
+					if(math.random(0, 1) == 1) then
+						board.DeathAnimationRotationSide = true
+					else
+						board.DeathAnimationRotationSide = false
+					end
+					board.ShakeScale = 30
+					board.FallTime = SysTime() + 0.25
+					board.PlayingDeathAnimation = true
+					board.Alive = false
+					board.InputEnabled = false
+
+					layer.Boards[board.boardID] = nil
+					layer.Amount = layer.Amount - 1
+					layer.FocusingBoard = nil
+
+					layer.SortBoards()
 				end
 
 				local AttackBarWide = layer.BoardBlockSize * 0.75
@@ -249,9 +403,28 @@ function GTetris.SetupBoardLayer(attachTo)
 						if(layer.Amount >= 4 && board != layer.FocusingBoard) then
 							gridColor = Color(80, 80, 80, 255)
 						end
+						board.ShakeScale = GTetris.IncFV(board.ShakeScale, -2, 0, 100)
+						if(board.PlayingDeathAnimation) then
+							if(board.FallTime < SysTime()) then
+								if(board.DeathAnimationRotationSide) then
+									board.DeathAnimationRotation = GTetris.IncFV(board.DeathAnimationRotation, 1 * board.CurrentScale, 0, 360)
+								else
+									board.DeathAnimationRotation = GTetris.IncFV(board.DeathAnimationRotation, -1 * board.CurrentScale, -360, 0)
+								end
+								board.DeathAnimationYSpeed = board.DeathAnimationYSpeed + GTetris.GetFixedValue(1)
+								board.DeathAnimationY = GTetris.IncFV(board.DeathAnimationY, board.DeathAnimationYSpeed, 0, ScrH() * 2)
+
+								if(board.DeathAnimationY >= ScrH()) then
+									board:Remove()
+									return
+								end
+							end
+						end
+						local shake = ScreenScaleH(board.ShakeScale) * board.CurrentScale
 						local matrix = Matrix()
 							matrix:SetScale(Vector(board.CurrentScale, board.CurrentScale, 1))
-							matrix:SetTranslation(Vector(board.CurrentXOffset || 0, board.CurrentYOffset || 0, 0))
+							matrix:SetTranslation(Vector((board.CurrentXOffset || 0) + math.random(-shake, shake), (board.CurrentYOffset || 0) + board.DeathAnimationY + math.random(-shake, shake), 0))
+							matrix:Rotate(Angle(0, board.DeathAnimationRotation, 0))
 							cam.PushModelMatrix(matrix)
 								draw_RoundedBox(0, 0, 0, totalWide, totalTall, Color(30, 30, 30, 255))
 								if(!GTetris.OldRenderingMethod) then
@@ -443,6 +616,17 @@ function GTetris.SetupBoardLayer(attachTo)
 									end
 									board.GravityTime = time + (1 / GTetris.Rulesets.Gravity)
 								end
+
+								if(!GTetris.TestCollision(board.CurrentBoard, shape, math.floor((GTetris.Rulesets.Width - GTetris.BlockWidth[board.CurrentPiece]) * 0.5), -4)) then
+									if(layer.Multiplayer) then
+										board.Alive = false
+										board.InputEnabled = false
+										board.StartDeathAnimation()
+										GTetris.SendDeathAnimation()
+									else
+										layer.SetupDefaultBoard(board.boardID)
+									end
+								end
 							end
 
 							local gap = ScreenScaleH(14)
@@ -555,7 +739,10 @@ function GTetris.SetupBoardLayer(attachTo)
 
 		layer.Think = function()
 			if(layer.Sorting) then
-				local fraction = math.ease.InCubic(math.Clamp(1 - (layer.CurrentSortingTime - SysTime()) / layer.SortingTime, 0, 1))
+				local fraction = math.Clamp(math.ease.OutQuad(1 - (layer.CurrentSortingTime - SysTime()) / layer.SortingTime), 0, 1)
+				if(fraction >= 1) then
+					fraction = 0
+				end
 				for _, board in pairs(layer.Boards) do
 					local offsetX = board.PreSortPosX - board.TargetX
 					local offsetY = board.PreSortPosY - board.TargetY

@@ -1,5 +1,6 @@
 GTetris.Rooms = GTetris.Rooms || {}
 GTetris.RoomsState = {}
+GTetris.RoomsTargets = {}
 
 util.AddNetworkString("GTetris.CreateRoom")
 util.AddNetworkString("GTetris.JoinRoom")
@@ -94,6 +95,12 @@ end
 
 function GTetris.LeaveRoom(ply, rID)
 	local room = GTetris.Rooms[rID]
+	if(GTetris.RoomsState[rID]) then
+		GTetris.SyncDeathState(ply, rID);
+		((GTetris.RoomsState[rID] || {}).aliveplayers || {})[ply:GetCreationID()] = nil
+		((GTetris.RoomsTargets[rID] || {}) || {})[ply:GetCreationID()] = nil
+	end
+
 	for _, _ply in pairs(GTetris.Rooms[rID].players) do
 		if(_ply == ply) then
 			GTetris.Rooms[rID].players[_] = nil
@@ -113,6 +120,8 @@ function GTetris.LeaveRoom(ply, rID)
 
 	if(playerRemaining <= 0) then
 		GTetris.Rooms[rID] = nil
+		GTetris.RoomsState[rID] = nil
+		GTetris.RoomsTargets[rID] = nil
 		return
 	end
 
@@ -240,5 +249,13 @@ net.Receive("GTetris.ModifyVars", function(length, sender)
 		net.WriteInt(type, 6)
 		GTetris.WriteFuncs[type](value)
 		net.Send(ply)
+	end
+end)
+
+hook.Add("PlayerDisconnected", "GTetris_PlayerDisconnected", function(ply)
+	if(GTetris.IsPlayerInRoom(ply)) then
+		local roomID = ply.GTetrisRoomID
+		GTetris.LeaveRoom(ply, roomID)
+		GTetris.SyncRoomDatas(roomID)
 	end
 end)

@@ -148,6 +148,7 @@ function GTetris.Hold(localplayer)
 	GTetris.HoldSound(4)
 	GTetris.PieceResetted(localplayer)
 	GTetris.SyncPieceStates(localplayer)
+	GTetris.SyncNextPieces(localplayer)
 end
 
 function GTetris.Softdrop(localplayer)

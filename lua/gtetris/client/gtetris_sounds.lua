@@ -48,6 +48,14 @@ function GTetris.BoardUpSound(vol)
 	GTetris.Playsound("sound/gtetris/garbage/up.mp3", vol)
 end
 
+function GTetris.DeathSound(focus, vol)
+	if(focus) then
+		GTetris.Playsound("sound/gtetris/die.mp3", vol)
+	else
+		GTetris.Playsound("sound/gtetris/die_background.mp3", vol)
+	end
+end
+
 function GTetris.SendAttackSound(lines, vol)
 	local index = 1
 	if(lines > 5) then

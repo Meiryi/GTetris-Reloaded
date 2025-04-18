@@ -2,6 +2,10 @@ GTetris.Enums = {}
 GTetris.Enums.ROTATIONSYS_SRS = 1
 GTetris.Enums.ROTATIONSYS_ARS = 2
 GTetris.Enums.ROTATIONSYS_CLS = 3
+
+GTetris.Enums.ENDING_WINNER = 1
+GTetris.Enums.ENDING_ABORTED = 2
+
 GTetris.Enums.RotationSystems = {
 	{
 		title = "SRS",

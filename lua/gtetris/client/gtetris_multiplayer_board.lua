@@ -1,3 +1,14 @@
+function GTetris.PlayWinnerAnimSequence(winnerName)
+	if(!IsValid(GTetris.MainUI)) then return end
+	local scrw, scrh = ScrW(), ScrH()
+	local layer = GTetris.CreatePanel(GTetris.MainUI, 0, 0, scrw, scrh, color_transparent)
+		
+end
+
+function GTetris.PlayAbortAnimSequence(winnerName)
+
+end
+
 net.Receive("GTetris.InitBoardLayer", function(length, sender)
 	local len = net.ReadUInt(32)
 	local data = net.ReadData(len)
