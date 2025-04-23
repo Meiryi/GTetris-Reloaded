@@ -14,6 +14,8 @@ util.AddNetworkString("GTetris.SyncTargets")
 util.AddNetworkString("GTetris.SyncReceivedAttacks")
 util.AddNetworkString("GTetris.SyncDeathState")
 util.AddNetworkString("GTetris.EndGame")
+util.AddNetworkString("GTetris.AbortGame")
+util.AddNetworkString("GTetris.SendSound")
 
 function GTetris.RespondPlayer(ply)
 	net.Start("GTetris.Respond")
@@ -37,6 +39,7 @@ function GTetris.EndGame(rID, winnerNick)
 	for _, player in pairs(roomdata.players) do
 		if(istable(player)) then continue end -- bot
 		net.Start("GTetris.EndGame")
+		net.WriteString(winnerNick)
 		net.Send(player)
 	end
 	GTetris.RoomsState[rID] = nil
@@ -45,6 +48,11 @@ end
 
 net.Receive("GTetris.StartGame", function(length, sender)
 	local rID = sender.GTetrisRoomID
+	if(GTetris.RoomStartedTimes[rID] && GTetris.RoomStartedTimes[rID] > SysTime()) then
+		GTetris.SendNotify(sender, "Failed to start the game", "Please wait a bit before starting the game. ("..math.floor(GTetris.RoomStartedTimes[rID] - SysTime()).."s)")
+		return
+	end
+	GTetris.RoomStartedTimes[rID] = SysTime() + 4
 	if(!GTetris.IsPlayerInRoom(sender) || !GTetris.IsRoomHost(sender)) then
 		GTetris.SendNotify(sender, "Failed to start the game", "You are not the host of this room.")
 		return
@@ -60,6 +68,7 @@ net.Receive("GTetris.StartGame", function(length, sender)
 	GTetris.RoomsTargets[rID] = {}
 	local boardData = {
 		ruleset = roomdata.ruleset,
+		roomName = roomdata.roomname,
 		players = {},
 	}
 	for _, player in pairs(roomdata.players) do
@@ -330,11 +339,36 @@ net.Receive("GTetris.SyncReceivedAttacks", function(length, sender)
 	GTetris.SyncReceivedAttacks(sender, rID)
 end)
 
-function GTetris.SyncDeathState(sender, rID)
+function GTetris.RemoveDataSync(rID, player)
 	if(!GTetris.RoomsState[rID]) then return end
 	local targets = GTetris.RoomsState[rID].datasync_targets
-	GTetris.RoomsState[rID].aliveplayers[sender:GetCreationID()].alive = false
-	local targetid = sender:GetCreationID()
+	for _, ply in pairs(targets) do
+		if(ply == player) then
+			table.remove(targets, _)
+			break
+		end
+	end
+end
+
+net.Receive("GTetris.AbortGame", function(length, sender)
+	local rID = sender.GTetrisRoomID
+	if(!GTetris.IsPlayerInRoom(sender)) then
+		return
+	end
+	GTetris.RemoveDataSync(rID, sender)
+	GTetris.SyncDeathState(sender, sender:GetCreationID(), rID)
+
+	if(sender:GetCreationID() == GTetris.Rooms[rID].host) then
+		GTetris.RoomStartedTimes[rID] = SysTime() + 4
+	end
+end)
+
+function GTetris.SyncDeathState(sender, cID, rID)
+	if(!GTetris.RoomsState[rID]) then return end
+	local targets = GTetris.RoomsState[rID].datasync_targets
+	GTetris.RoomsState[rID].aliveplayers[cID].alive = false
+	GTetris.RoomsTargets[rID][cID] = nil
+	local targetid = cID
 	for _, ply in pairs(targets) do
 		if(!IsValid(ply) || ply == sender) then continue end
 		net.Start("GTetris.SyncDeathState")
@@ -363,7 +397,29 @@ net.Receive("GTetris.SyncDeathState", function(length, sender)
 	if(!GTetris.IsPlayerInRoom(sender)) then
 		return
 	end
-	GTetris.SyncDeathState(sender, rID)
+	GTetris.SyncDeathState(sender, sender:GetCreationID(), rID)
+end)
+
+function GTetris.SendSound(sender, rID)
+	if(!GTetris.RoomsState[rID]) then return end
+	local targets = GTetris.RoomsState[rID].datasync_targets
+	local targetid = sender:GetCreationID()
+	local type = net.ReadInt(6)
+	for _, ply in pairs(targets) do
+		if(!IsValid(ply) || ply == sender) then continue end
+		net.Start("GTetris.SendSound")
+		net.WriteString(targetid)
+		net.WriteInt(type, 6)
+		net.Send(ply)
+	end
+end
+
+net.Receive("GTetris.SendSound", function(length, sender)
+	local rID = sender.GTetrisRoomID
+	if(!GTetris.IsPlayerInRoom(sender)) then
+		return
+	end
+	GTetris.SendSound(sender, rID)
 end)
 
 function GTetris.RandPlayerTargets(roomID)

@@ -177,3 +177,43 @@ surface.CreateFont("GTetris_AttackNumberFont", {
     scanlines = 0,
     antialias = true,
 })
+
+surface.CreateFont("GTetris_AnimSequence1x", {
+    font = "Arial",
+    extended = false,
+    size = ScreenScaleH(30),
+    weight = 1000,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+})
+
+surface.CreateFont("GTetris_AnimSequence2x", {
+    font = "Arial",
+    extended = false,
+    size = ScreenScaleH(64),
+    weight = 1000,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+})
+
+surface.CreateFont("GTetris_AnimSequence3x", {
+    font = "Arial",
+    extended = false,
+    size = ScreenScaleH(24),
+    weight = 1000,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+})
+
+surface.CreateFont("GTetris_AnimSequence4x", {
+    font = "Arial",
+    extended = false,
+    size = ScreenScaleH(64),
+    weight = 1000,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+})

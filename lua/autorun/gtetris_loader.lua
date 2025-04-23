@@ -1,5 +1,3 @@
-AddCSLuaFile()
-
 GTetris = GTetris || {}
 GTetris.LoadPath = "gtetris/"
 

@@ -1,5 +1,5 @@
 local mat = Material("gtetris/quit.png")
-function GTetris.AddBackButton(parent, func)
+function GTetris.AddBackButton(parent, func, nooverride)
 	local scrw, scrh = ScrW(), ScrH()
 	local w, h = scrh * 0.2, scrh * 0.075
 	local gap = ScreenScaleH(6)
@@ -34,8 +34,9 @@ function GTetris.AddBackButton(parent, func)
 			base:SetWide(base.Wide)
 			btn:SetWide(base:GetWide())
 		end
-
-	GTetris.LastBackButton = base
+	if(!nooverride) then
+		GTetris.LastBackButton = base
+	end
 end
 
 function GTetris.DestroyLastBackButton()

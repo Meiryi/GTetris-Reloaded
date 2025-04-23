@@ -2,6 +2,7 @@ GTetris.Input_DAS = 0.115
 GTetris.Input_ARR = 0
 GTetris.Input_SDF = 50
 
+
 local keyStates = {}
 local currentDAS = 0
 local currentARR = 0
@@ -36,12 +37,18 @@ end
 
 function GTetris.PieceRotated(localplayer)
 	GTetris.RotateSound(localplayer.Bonus, 4)
+	if(localplayer.Bonus) then
+		GTetris.SendSound(GTetris.Enums.SOUND_ROTATEBONUS)
+	else
+		GTetris.SendSound(GTetris.Enums.SOUND_ROTATE)
+	end
 	GTetris.SyncPieceStates(localplayer)
 end
 
 function GTetris.PieceMoved(localplayer, nosound)
 	if(!nosound) then
 		GTetris.MoveSound(4)
+		GTetris.SendSound(GTetris.Enums.SOUND_MOVE)
 	end
 	GTetris.SyncPieceStates(localplayer)
 end
@@ -146,6 +153,7 @@ function GTetris.Hold(localplayer)
 	localplayer.CurrentRotationState = 4
 	localplayer.HoldUsed = true
 	GTetris.HoldSound(4)
+	GTetris.SendSound(GTetris.Enums.SOUND_HOLD)
 	GTetris.PieceResetted(localplayer)
 	GTetris.SyncPieceStates(localplayer)
 	GTetris.SyncNextPieces(localplayer)
@@ -155,6 +163,7 @@ function GTetris.Softdrop(localplayer)
 	if(GTetris.MovePiece(localplayer, 0, 1)) then
 		GTetris.SoftDropSound(4)
 		GTetris.SyncPieceStates(localplayer)
+		GTetris.SendSound(GTetris.Enums.SOUND_DROP)
 	end
 end
 

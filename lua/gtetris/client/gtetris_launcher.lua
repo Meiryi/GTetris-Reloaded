@@ -74,7 +74,7 @@ local buttons = {
 local logo = Material("gtetris/logo.png")
 function GTetris.LaunchGame()
 	if(IsValid(GTetris.MainUI)) then
-		GTetris.MainUI:Remove()
+		return
 	end
 	local scrw, scrh = ScrW(), ScrH()
 	local headerTall = scrh * 0.07

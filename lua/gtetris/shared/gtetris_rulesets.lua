@@ -6,6 +6,17 @@ GTetris.Enums.ROTATIONSYS_CLS = 3
 GTetris.Enums.ENDING_WINNER = 1
 GTetris.Enums.ENDING_ABORTED = 2
 
+GTetris.Enums.SOUND_MOVE = 1
+GTetris.Enums.SOUND_ROTATE = 2
+GTetris.Enums.SOUND_ROTATEBONUS = 3
+GTetris.Enums.SOUND_HOLD = 4
+GTetris.Enums.SOUND_PLACE = 5
+GTetris.Enums.SOUND_DROP = 6
+GTetris.Enums.SOUND_COMBOBREAK = 7
+GTetris.Enums.SOUND_BOARDUP = 8
+GTetris.Enums.SOUND_CLEARLINE = 9
+GTetris.Enums.SOUND_CLEARQUAD = 10
+
 GTetris.Enums.RotationSystems = {
 	{
 		title = "SRS",

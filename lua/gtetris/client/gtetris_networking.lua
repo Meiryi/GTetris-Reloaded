@@ -11,7 +11,7 @@ function GTetris.SyncBoardInfo(localplayer)
 end
 
 function GTetris.SyncReceivedAttacks(localplayer)
-	if(!GTetris.IsInMultiplayerGame()) then return end
+	if(!GTetris.IsInMultiplayerGame() || !IsValid(localplayer)) then return end
 	local attacks = localplayer.ReceivedAttacks
 	local data, length = GTetris.CompressTable(attacks)
 	net.Start("GTetris.SyncReceivedAttacks")
@@ -33,6 +33,7 @@ end
 
 function GTetris.SendAttacks(attacks, x, y)
 	if(!GTetris.IsInMultiplayerGame()) then return end
+	attacks = attacks * GTetris.Rulesets.AttackMultiplier
 	net.Start("GTetris.SendAttack")
 	net.WriteInt(x, 7)
 	net.WriteInt(y, 7)
@@ -51,6 +52,11 @@ function GTetris.SendAttacks(attacks, x, y)
 	to = {x = (targetboard.CurrentXOffset || 0) + ((targetboard:GetWide() * 0.5) * scaleb), y = (targetboard.CurrentYOffset || 0) + ((targetboard:GetTall() * 0.5) * scaleb)}
 	if(!from || !to) then return end
 	layer.InsertAttackTrace(from, to)
+	GTetris.SendAttackSound(attacks, 2)
+	timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
+		if(!IsValid(layer) || layer.Amount > 2) then return end
+		GTetris.BoardHitSound(2)
+	end)
 end
 
 function GTetris.SendClearLineInfo(piece, lines, spinBonus, combo, attackBonus)
@@ -106,26 +112,18 @@ function GTetris.SendBoardTexts(x, y, num, cancel)
 	net.SendToServer()
 end
 
-local lastsdTime1 = 0
-function GTetris.SendMoveSound(localplayer)
-	if(!GTetris.IsInMultiplayerGame()) then return end
-	
-end
-
-local lastsdTime2 = 0
-function GTetris.SendSoftdropSound(localplayer)
-	if(!GTetris.IsInMultiplayerGame()) then return end
-	
-end
-
-function GTetris.SendClearSound(localplayer)
-	if(!GTetris.IsInMultiplayerGame()) then return end
-	
-end
-
-function GTetris.SyncDeadStatus(localplayer)
-	if(!GTetris.IsInMultiplayerGame()) then return end
-	
+local lastsend = 0
+local oldsd = -1
+function GTetris.SendSound(type)
+	local t = RealTime()
+	if(!GTetris.IsInMultiplayerGame() || (t == lastsend && oldsd == type)) then
+		return
+	end
+	net.Start("GTetris.SendSound")
+	net.WriteInt(type, 6)
+	net.SendToServer()
+	lastsend = t
+	oldsd = type
 end
 
 net.Receive("GTetris.SyncRuletset", function(length, sender)
@@ -233,6 +231,17 @@ net.Receive("GTetris.LineCleared", function(length, sender)
 		if(spinBonus) then
 			GTetris.SetSpinText(boardID, piece)
 		end
+
+		local layer = GTetris.BoardLayer
+		if(board == layer.FocusingBoard) then
+			GTetris.PlayClearSound(lines, spinBonus, combo, attackBonus, 2)
+		else
+			if(layer.Amount <= 2) then
+				GTetris.PlayClearSound(lines, spinBonus, combo, attackBonus, 2)
+			else
+				GTetris.PlayClearSound(lines, spinBonus, combo, attackBonus, 0.5)
+			end
+		end
 	end
 end)
 
@@ -269,6 +278,23 @@ net.Receive("GTetris.SendAttack", function(length, sender)
 				GTetris.SyncReceivedAttacks(GTetris.GetLocalPlayer())
 			end)
 		end
+		if(attacker_board == GTetris.GetLocalPlayer()) then
+			GTetris.SendAttackSound(attacks, 2)
+		else
+			if(GTetris.BoardLayer.Amount <= 2) then
+				GTetris.SendAttackSound(attacks, 2)
+			else
+				GTetris.SendAttackSound(attacks, 0.5)
+			end
+		end
+
+		if(victim_board == GTetris.BoardLayer.FocusingBoard) then
+			GTetris.ReceiveAttackSound(attacks, 2)
+		end
+		timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
+			if(!IsValid(victim_board) || !IsValid(GTetris.BoardLayer) || victim_board != GTetris.BoardLayer.FocusingBoard) then return end
+			GTetris.BoardHitSound(2)
+		end)
 
 		local layer = GTetris.BoardLayer
 		local blocksize = layer.BoardBlockSize
@@ -324,4 +350,53 @@ net.Receive("GTetris.SyncDeathState", function(length, sender)
 	if(IsValid(board)) then
 		board.StartDeathAnimation()
 	end
+end)
+
+local sounds = {
+	[GTetris.Enums.SOUND_MOVE] = "sound/gtetris/general/move.mp3",
+	[GTetris.Enums.SOUND_ROTATE] = "sound/gtetris/general/rotate.mp3",
+	[GTetris.Enums.SOUND_ROTATEBONUS] = "sound/gtetris/general/rotatebonus.mp3",
+	[GTetris.Enums.SOUND_HOLD] = "sound/gtetris/general/hold.mp3",
+	[GTetris.Enums.SOUND_PLACE] = "sound/gtetris/general/place.mp3",
+	[GTetris.Enums.SOUND_DROP] = "sound/gtetris/general/softdrop.mp3",
+	[GTetris.Enums.SOUND_COMBOBREAK] = "sound/gtetris/combo/combobreak.mp3",
+	[GTetris.Enums.SOUND_BOARDUP] = "sound/gtetris/garbage/up.mp3",
+}
+net.Receive("GTetris.SendSound", function(length, sender)
+	if(!GTetris.IsInMultiplayerGame()) then return end
+	local boardID = net.ReadString()
+	local soundID = net.ReadInt(6)
+	local sd = sounds[soundID]
+	if(!sd) then return end
+	local board = GTetris.GetBoard(boardID)
+	if(IsValid(board)) then
+		local layer = GTetris.BoardLayer
+		if(layer.Amount <= 2 || board == layer.FocusingBoard) then
+			GTetris.Playsound(sd, 2)
+		else
+			if(layer.Amount <= 4) then
+				GTetris.Playsound(sd, 0.5)
+			end
+		end
+	end
+end)
+
+net.Receive("GTetris.EndGame", function(length, sender)
+	if(!GTetris.IsInMultiplayerGame()) then return end
+	local layer = GTetris.BoardLayer
+	if(!IsValid(layer) || layer.Exiting) then return end
+	local winnerNick = net.ReadString()
+	timer.Simple(0.5, function()
+		layer.Exiting = true
+		GTetris.PlayWinnerAnimSequence(winnerNick, function()
+			if(IsValid(GTetris.BoardLayer) && !GTetris.BoardLayer.Exiting) then return end
+			if(IsValid(GTetris.MuliplayerPanel)) then
+				GTetris.MuliplayerPanel.Hide = false
+			end
+		end)
+	end)
+end)
+
+hook.Add("HUDPaint", "Test", function()
+	--draw.RoundedBox(0, 0, 0, ScrW(), ScrH(), color_white)
 end)

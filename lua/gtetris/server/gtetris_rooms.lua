@@ -1,6 +1,7 @@
 GTetris.Rooms = GTetris.Rooms || {}
 GTetris.RoomsState = {}
 GTetris.RoomsTargets = {}
+GTetris.RoomStartedTimes = {}
 
 util.AddNetworkString("GTetris.CreateRoom")
 util.AddNetworkString("GTetris.JoinRoom")
@@ -96,7 +97,7 @@ end
 function GTetris.LeaveRoom(ply, rID)
 	local room = GTetris.Rooms[rID]
 	if(GTetris.RoomsState[rID]) then
-		GTetris.SyncDeathState(ply, rID);
+		GTetris.SyncDeathState(ply, ply:GetCreationID(), rID);
 		((GTetris.RoomsState[rID] || {}).aliveplayers || {})[ply:GetCreationID()] = nil
 		((GTetris.RoomsTargets[rID] || {}) || {})[ply:GetCreationID()] = nil
 	end

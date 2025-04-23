@@ -103,6 +103,17 @@ function GTetris.MultiplayerUI(ui)
 		end
 	end
 
+	base.Hide = false
+	base.Alpha = 0
+	base.Think = function()
+		if(!base.Hide) then
+			base.Alpha = GTetris.IncFV(base.Alpha, 15, 0, 255)
+		else
+			base.Alpha = GTetris.IncFV(base.Alpha, -15, 0, 255)
+		end
+		base:SetAlpha(base.Alpha)
+	end
+
 	GTetris.MuliplayerPanel = base
 	GTetris.MuliplayerBaseUI = ui
 end
@@ -118,10 +129,7 @@ net.Receive("GTetris.GetRooms", function(length, sender)
 	GTetris.RespondWaiting()
 end)
 
-net.Receive("GTetris.Notify", function(length, sender)
-	local title = net.ReadString()
-	local desc = net.ReadString()
-	if(!IsValid(GTetris.MainUI)) then return end
+function GTetris.AddNotify(title, desc)
 	if(IsValid(GTetris.NotifyPanel)) then
 		GTetris.NotifyPanel:Remove()
 	end
@@ -156,6 +164,13 @@ net.Receive("GTetris.Notify", function(length, sender)
 		base:SetAlpha(base.Alpha)
 	end
 	GTetris.NotifyPanel = base
+end
+
+net.Receive("GTetris.Notify", function(length, sender)
+	local title = net.ReadString()
+	local desc = net.ReadString()
+	if(!IsValid(GTetris.MainUI)) then return end
+	GTetris.AddNotify(title, desc)
 end)
 
 net.Receive("GTetris.JoinRoom", function(length, sender)
@@ -317,6 +332,11 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 					end
 				end
 				function entry:OnEnter(val)
+					if(utf8.len(val) > 32) then
+						GTetris.AddNotify("Room name too long", "Room name must be less than 32 characters")
+						entry:SetValue("")
+						return
+					end
 					if(!GTetris.IsRoomHost()) then return end
 					GTetris.RoomData.roomname = val
 					GTetris.SyncRoomData()
@@ -330,7 +350,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		GTetris.InsertOptionTitle(sbase, "Gameplay")
 		GTetris.InsertOptionLine(sbase)
 		GTetris.InsertOptionGap(sbase, 4)
-		GTetris.InsertValueChanger(sbase, "Playfield Width", "Rulesets->Width", 4, 20, 1, function(pointer, newValue)
+		GTetris.InsertValueChanger(sbase, "Playfield Width", "Rulesets->Width", 4, 10, 1, function(pointer, newValue)
 			GTetris.SendVarModify(pointer, newValue, GTetris.DataType_INT)
 		end)
 		GTetris.InsertValueChanger(sbase, "Playfield Height", "Rulesets->Height", 4, 24, 1, function(pointer, newValue)
@@ -446,8 +466,27 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			surface.SetDrawColor(200, 200, 200, entry.Alpha)
 			surface.DrawOutlinedRect(0, 0, entry:GetWide(), entry:GetTall(), ScreenScaleH(1))
 		end
+		local _, _, textlimit = GTetris.CreateLabel(base.Chat, gap * 1.5, base.Chat:GetTall() - (entryTall + gap), "0/64", "GTetris_ChatFont", Color(200, 200, 200, 255))
+			textlimit:SetY(textlimit:GetY() - textlimit:GetTall())
+		function entry:OnChange()
+			local len = utf8.len(entry:GetValue())
+			textlimit.UpdateText(len.."/64")
+			if(len > 64) then
+				textlimit:SetTextColor(Color(255, 55, 55, 255))
+			else
+				textlimit:SetTextColor(Color(200, 200, 200, 255))
+			end
+		end
 		function entry:OnEnter(val)
-			if(#val < 1) then return end
+			local len = utf8.len(val)
+			if(len < 1) then return end
+			textlimit.UpdateText("0/64")
+			textlimit:SetTextColor(Color(200, 200, 200, 255))
+			if(len > 64) then
+				GTetris.AddNotify("Failed to send message", "Your message is too long!")
+				entry:SetText("")
+				return
+			end
 			net.Start("GTetris.Chat")
 			net.WriteString(val)
 			net.SendToServer()

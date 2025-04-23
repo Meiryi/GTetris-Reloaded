@@ -102,7 +102,7 @@ function GTetris.SetupBoardLayer(attachTo)
 		end
 
 		layer.Sorting = false
-		layer.SortingTime = 0.33
+		layer.SortingTime = 0.45
 		layer.CurrentSortingTime = 0
 		layer.SortBoards = function(instant)
 			layer.CurrentSortingTime = SysTime() + layer.SortingTime
@@ -118,12 +118,14 @@ function GTetris.SetupBoardLayer(attachTo)
 			local _x, _y = 0, 0
 			local pad_offset = 0
 			local init = true
-			local center = centerX - layer.BoardWide * 0.5
 			local scale = 1 / (math.Clamp(amount - 1, 1, 3))
 			local rows = math.ceil((amount - 1) / maxColumns) -- -1 for the local player or the focused board
 			local scaled_tall = layer.BoardTall * scale
 			local gap = ScreenScaleH(16)
-			_x = center + layer.BoardWide * 1.75
+			local _w = math.max(layer.BoardBlockSize * 10, layer.BoardWide)
+			local _h = layer.BoardBlockSize * 20
+			local center = centerX - _w * 0.5
+			_x = center + _w * 1.75
 			_y = scrh * 0.5 - layer.BoardTall * 0.5 - gap
 			pad_offset = (scrh * 0.5) * (1 - scale)
 
@@ -135,11 +137,11 @@ function GTetris.SetupBoardLayer(attachTo)
 					board.TargetX = centerX - board:GetWide() * 0.5
 					board.TargetY = centerY - board:GetTall() * 0.5
 				elseif(amount <= 2) then
-					local center = centerX - board:GetWide() * 0.5
+					local center = centerX - _w * 0.5
 					if(board == layer.FocusingBoard) then
-						board.TargetX = center - board:GetWide() * 1.15
+						board.TargetX = center - _w * 1.15
 					else
-						board.TargetX = center + board:GetWide() * 1.15
+						board.TargetX = center + _w * 1.15
 					end
 					board.TargetY = centerY - board:GetTall() * 0.5
 					board.TargetScale = 1
@@ -155,7 +157,7 @@ function GTetris.SetupBoardLayer(attachTo)
 						_y = _y + scaled_tall + gap
 						currentCol = currentCol + 1
 						if(currentCol >= maxColumns) then
-							_x = _x + layer.BoardWide * scale + gap
+							_x = _x + _w * scale + gap
 							_y = scrh * 0.5 - layer.BoardTall * 0.5 - gap
 							currentCol = 0
 						end
@@ -177,7 +179,7 @@ function GTetris.SetupBoardLayer(attachTo)
 							currentCol = 0
 							currentRow = currentRow + 1
 							if(currentRow >= 3) then
-								_x = centerX - layer.BoardWide * 1.75 - layer.BoardWide * 0.5 - ScreenScaleH(24)
+								_x = centerX - _w * 1.75 - _w * 0.5 - ScreenScaleH(24)
 								currentRow = 0
 							end
 						end
@@ -233,7 +235,7 @@ function GTetris.SetupBoardLayer(attachTo)
 				end
 
 				local t = math.max(v.time - SysTime(), 0.01) / v.target_trans
-				--local vec = GTetris:CircumCircle({v.v1, v.v2, v.v3}, 1 - t)
+				--local vec = GTetris.CircumCircle({v.v1, v.v2, v.v3}, 1 - t)
 				local vec = math.QuadraticBezier(1 - t, v.v1, v.v2, v.v3)
 				if(!vec) then continue end
 				surface.SetDrawColor(255, 70, 70, v.alpha)
@@ -334,6 +336,12 @@ function GTetris.SetupBoardLayer(attachTo)
 				board.StartDeathAnimation = function()
 					if(board == GTetris.GetLocalPlayer() || board == layer.FocusingBoard) then
 						GTetris.DeathSound(true, 4)
+					else
+						if(layer.Amount <= 2) then
+							GTetris.DeathSound(true, 4)
+						else
+							GTetris.DeathSound(false, 2)
+						end
 					end
 					if(math.random(0, 1) == 1) then
 						board.DeathAnimationRotationSide = true
@@ -348,12 +356,18 @@ function GTetris.SetupBoardLayer(attachTo)
 
 					layer.Boards[board.boardID] = nil
 					layer.Amount = layer.Amount - 1
-					layer.FocusingBoard = nil
+
+					if(board == GTetris.GetLocalPlayer() || board == layer.FocusingBoard) then
+						local boards = layer.Boards
+						layer.FocusingBoard = table.Random(boards)
+					end
 
 					layer.SortBoards()
 				end
 
 				local AttackBarWide = layer.BoardBlockSize * 0.75
+				board.PreRender = function(board) end
+				board.PostRender = function(board) end
 				board.Paint2x = function()
 					local BlockSize = layer.BoardBlockSize
 					local CurrentFraction = board:GetTall() / board.TargetHeight
@@ -433,6 +447,7 @@ function GTetris.SetupBoardLayer(attachTo)
 									surface.DrawTexturedRect(0, 0, scrw, scrh)
 								else
 									surface.SetMaterial(blockMat)
+									board.PreRender(board)
 									for i = -20, layer.BoardHeight  do
 										local rows = board.CurrentBoard[i]
 										if(!rows) then continue end
@@ -560,9 +575,10 @@ function GTetris.SetupBoardLayer(attachTo)
 								draw_RoundedBox(0, x, 0, AttackBarWide, board:GetTall(), Color(30, 30, 30, 255))
 								draw_RoundedBox(0, x, y - GTetris.Rulesets.AttackCap * BlockSize, AttackBarWide, lineSize, gridColor)
 								y = y + lineSize
+								local _t = CurTime()
 								for _, attack in ipairs(board.ReceivedAttacks) do
 									local tall = attack.amount * BlockSize - lineSize
-									if(attack.time < systime) then
+									if(attack.time < _t) then
 										draw_RoundedBox(0, x, y - tall, AttackBarWide, tall, Color(255, 50, 50, 255))
 									else
 										draw_RoundedBox(0, x, y - tall, AttackBarWide, tall, Color(255, 50, 50, 50))
@@ -722,6 +738,7 @@ function GTetris.SetupBoardLayer(attachTo)
 								surface.DrawTexturedRectRotated(ax, ay, size * pc.scale, size * pc.scale, pc.rotation)
 							end
 
+							board.PostRender(board)
 							cam.PopModelMatrix()
 					end
 				end
@@ -737,7 +754,19 @@ function GTetris.SetupBoardLayer(attachTo)
 			return board
 		end
 
+		layer.Alpha = 0
+		layer.Paint = function() end
 		layer.Think = function()
+			if(!layer.Exiting) then
+				layer.Alpha = GTetris.IncFV(layer.Alpha, 15, 0, 255)
+			else
+				layer.Alpha = GTetris.IncFV(layer.Alpha, -15, 0, 255)
+				if(layer.Alpha <= 0) then
+					layer:Remove()
+					return
+				end
+			end
+			layer:SetAlpha(layer.Alpha)
 			if(layer.Sorting) then
 				local fraction = math.Clamp(math.ease.OutQuad(1 - (layer.CurrentSortingTime - SysTime()) / layer.SortingTime), 0, 1)
 				if(fraction >= 1) then

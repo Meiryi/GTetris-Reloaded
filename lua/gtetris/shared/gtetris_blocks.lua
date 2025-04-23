@@ -84,3 +84,4 @@ GTetris.Blocks = {
 		[4] = {{0, 0},{0, 1},{1, 0},{1, 1},},
 	},
 }
+GTetris_Blocks = GTetris.Blocks
