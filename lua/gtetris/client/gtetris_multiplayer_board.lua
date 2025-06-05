@@ -28,14 +28,15 @@ function GTetris.PlayWinnerAnimSequence(winnerName, func)
 		})
 	end
 	local tw, th = GTetris.GetTextSize("GTetris_AnimSequence2x", winnerName)
-	addtext("Winner!", "GTetris_AnimSequence1x", color_white, scrw * 0.25, scrh * 0.3, nil, 0.6, 2.5, 0.5, 30, 30)
-	addtext(winnerName, "GTetris_AnimSequence2x", color_white, scrw * 0.5, scrh * 0.5 - ScreenScaleH(32), SysTime() + 0.6, 0.9, 2.55, 0.33, 30, 15)
-	addtext("Last player standing", "GTetris_AnimSequence3x", color_white, scrw * 0.8, scrh * 0.6, SysTime() + 1, 1.2, 2.6, 0.5, 30, 20)
-
+	addtext("Winner!", "GTetris_AnimSequence1x", color_white, scrw * 0.25, scrh * 0.3, nil, 1, 4.9, 0.5, 30, 30)
+	addtext(winnerName, "GTetris_AnimSequence2x", color_white, scrw * 0.5, scrh * 0.5 - ScreenScaleH(32), SysTime() + 1, 1.33, 5, 0.33, 30, 15)
+	addtext("Last player standing", "GTetris_AnimSequence3x", color_white, scrw * 0.8, scrh * 0.6, SysTime() + 1.33, 1.5, 5.1, 0.5, 30, 20)
+	GTetris.DesiredMusic = ""
+	GTetris.Playsound("sound/gtetris/game/outro.mp3", GTetris.UserData.SFXVol * 2)
 	local layer = GTetris.CreatePanel(GTetris.MainUI, 0, 0, scrw, scrh, color_transparent)
 		layer:MakePopup()
 
-		layer.Time = 3
+		layer.Time = 5.5
 		layer.KillTime = SysTime() + layer.Time
 		layer.Paint = function()
 			local systime = SysTime()
@@ -75,8 +76,8 @@ end
 function GTetris.PlayStartingAnimSequence(parent, roomName)
 	local scrw, scrh = ScrW(), ScrH()
 	local layer = GTetris.CreatePanel(parent, 0, 0, scrw, scrh, color_transparent)
-
-		layer.Time = 6
+		GTetris.Playsound("sound/gtetris/game/intro.mp3", GTetris.UserData.SFXVol * 2)
+		layer.Time = 8
 		layer.KillTime = SysTime() + layer.Time
 		layer.LastTime = -1
 		layer.CurrentScale1 = 1
@@ -89,6 +90,8 @@ function GTetris.PlayStartingAnimSequence(parent, roomName)
 			local x, y = ScrW() * 0.5, ScrH() * 0.5
 			local systime = SysTime()
 			if(systime > layer.KillTime) then
+				GTetris.ChooseBattleMusic()
+				GTetris.CurrentVolume = 0
 				layer:Remove()
 				return
 			end
@@ -105,6 +108,14 @@ function GTetris.PlayStartingAnimSequence(parent, roomName)
 					layer.CurrentScale1 = 1
 					layer.CurrentScale2 = 1
 					layer.Alpha = 255
+
+					if(isnumber(t) && t > 0) then
+						GTetris.Playsound("sound/gtetris/game/game_tick_"..(4 - t)..".mp3", GTetris.UserData.SFXVol * 2)
+					else
+						if(t == "GO!") then
+							GTetris.Playsound("sound/gtetris/game/game_start.mp3", GTetris.UserData.SFXVol * 2)
+						end
+					end
 				end
 				local tw, th = GTetris.GetTextSize("GTetris_AnimSequence4x", t)
 				layer.CurrentScale1 = GTetris.IncFV(layer.CurrentScale1, -0.02, 0, 1)
@@ -144,13 +155,17 @@ function GTetris.PlayStartingAnimSequence(parent, roomName)
 		end
 end
 
-function GTetris.PlayAbortAnimSequence(winnerName)
-
-end
-
 net.Receive("GTetris.InitBoardLayer", function(length, sender)
 	local len = net.ReadUInt(32)
 	local data = net.ReadData(len)
+	local spectate = net.ReadBool()
+	local extra = net.ReadBool()
+	local playerdata = {}
+	if(extra) then
+		local plen = net.ReadUInt(32)
+		local pdata = net.ReadData(plen)
+		playerdata = GTetris.DecompressTable(pdata)
+	end
 	local roomdata = GTetris.DecompressTable(data)
 	local players = {}
 
@@ -164,8 +179,7 @@ net.Receive("GTetris.InitBoardLayer", function(length, sender)
 	local BaseUI = GTetris.MainUI
 	local layer = GTetris.SetupBoardLayer(BaseUI)
 	layer.Multiplayer = true
-	layer.InputBlockTime = SysTime() + 5
-	GTetris.PlayStartingAnimSequence(layer.AnimLayer, roomdata.roomName)
+	layer.InputBlockTime = SysTime() + 7
 	GTetris.AddBackButton(layer.AnimLayer, function()
 		layer.Exiting = true
 		if(IsValid(GTetris.MuliplayerPanel)) then
@@ -173,6 +187,7 @@ net.Receive("GTetris.InitBoardLayer", function(length, sender)
 		end
 		net.Start("GTetris.AbortGame")
 		net.SendToServer()
+		GTetris.DesiredMusic = "gtetris/ost/room.mp3"
 	end, true)
 	GTetris.ApplyRulesets(roomdata.ruleset)
 
@@ -181,21 +196,72 @@ net.Receive("GTetris.InitBoardLayer", function(length, sender)
 		if(ply.Bot) then
 		else
 			if(player == LocalPlayer()) then
-				local id = tostring(ply.playerID)
-				local board = GTetris.CreateBoard(id, true)
-				layer.LocalPlayerID = id
-				board.PlayerNick = ply.nick
+				if(!spectate) then
+					local id = tostring(ply.playerID)
+					local board = GTetris.CreateBoard(id, true)
+					layer.LocalPlayerID = id
+					board.PlayerNick = ply.nick
+				end
 			else
 				local id = tostring(ply.playerID)
 				local board = GTetris.CreateBoard(id)
 				board.PlayerNick = ply.nick
+				board.AssignedID = ply.playerID
 			end
 		end
 	end
 
-	GTetris.SortBoards(true)
-end)
+	GTetris.DesiredMusic = "null"
+	if(spectate) then
+		GTetris.ChooseBattleMusic()
+		local boards = {}
+		local layer = GTetris.BoardLayer
+		if(IsValid(layer)) then
+			for id, board in pairs(layer.Boards) do
+				local data = playerdata[board.AssignedID || "null"]
+				if(data) then
+					if(data.nextpieces) then
+						for i = 1, #data.nextpieces do
+							local piece = string.sub(data.nextpieces, i, i)
+							if(piece) then
+								board.CurrentPieces[i] = tonumber(piece)
+							end
+						end
+					end
+					local pos = board.CurrentPosition
+					board.CurrentHoldPiece = data.holdpieceid || board.CurrentHoldPiece
+					board.CurrentPosition = {
+						x = data.x || pos.x,
+						y = data.y || pos.y
+					}
+					board.CurrentRotationState = data.rotation || board.CurrentRotationState
+					board.CurrentPiece = data.pieceid || board.CurrentPiece
+					board.CurrentB2B = data.b2b || board.CurrentB2B
+					board.CurrentCombo = data.combo || board.CurrentCombo
+					if(data.board) then
+						local _board = util.JSONToTable(util.Decompress(data.board))
+						if(_board) then
+							board.CurrentBoard = _board
+						end
+					end
+					if(data.receivedattacks) then
+						local attacks = util.JSONToTable(util.Decompress(data.receivedattacks))
+						if(attacks) then
+							board.ReceivedAttacks = attacks
+						end
+					end
+				end
+				table.insert(boards, board)
+			end
 
-net.Receive("GTetris.SendAttack", function(length, sender)
-	
+			local rand = boards[math.random(1, #boards)]
+			if(IsValid(rand)) then
+				layer.FocusingBoard = rand
+			end
+		end
+	else
+		GTetris.PlayStartingAnimSequence(layer.AnimLayer, roomdata.roomName)
+		GTetris.BoardLayer.ScaleSpeed = 0.2
+	end
+	GTetris.SortBoards(true)
 end)

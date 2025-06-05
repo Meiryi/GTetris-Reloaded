@@ -1,6 +1,6 @@
 GTetris.Rooms = GTetris.Rooms || {}
-GTetris.RoomsState = {}
-GTetris.RoomsTargets = {}
+GTetris.RoomsState = GTetris.RoomsState || {}
+GTetris.RoomsTargets = GTetris.RoomsTargets || {}
 GTetris.RoomStartedTimes = {}
 
 util.AddNetworkString("GTetris.CreateRoom")
@@ -23,6 +23,7 @@ function GTetris.CreateRoom(rID, host)
 		spectators = {},
 		maxplayers = 4,
 		ruleset = table.Copy(GTetris.Rulesets.Default),
+		started = false,
 	}
 	host.GTetrisRoomID = rID
 end
@@ -51,6 +52,7 @@ function GTetris.SyncRoomDatas(rID, ignore)
 		roomData.players = {}
 		roomData.spectators = room.spectators
 		roomData.roomname = room.roomname
+		roomData.started = room.started
 
 	for _, ply in pairs(room.players) do
 		if(istable(ply)) then -- bot
@@ -123,6 +125,7 @@ function GTetris.LeaveRoom(ply, rID)
 		GTetris.Rooms[rID] = nil
 		GTetris.RoomsState[rID] = nil
 		GTetris.RoomsTargets[rID] = nil
+		GTetris.PlayerDatas[rID] = nil
 		return
 	end
 
@@ -167,6 +170,13 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		print("[GTetris] "..sender:Nick().." tried to join a room that doesn't exist!")
 		GTetris.RespondPlayer(sender)
 		GTetris.SendNotify(sender, "Failed to join room", "This room does not exist.")
+		return
+	end
+	local room = GTetris.Rooms[rID]
+	if(table.Count(room.players) >= room.maxplayers) then
+		print("[GTetris] "..sender:Nick().." tried to join a full room!")
+		GTetris.RespondPlayer(sender)
+		GTetris.SendNotify(sender, "Failed to join room", "This room is full.")
 		return
 	end
 	GTetris.JoinRoom(sender, rID)

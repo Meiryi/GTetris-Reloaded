@@ -1,3 +1,16 @@
+function GTetris_CloneRow(board, nrow, width)
+	local row = board[nrow]
+	if(!row) then
+		return {}
+	else
+		local newrow = {}
+		for i = 0, #row do
+			newrow[i] = row[i]
+		end
+		return newrow
+	end
+end
+
 function GTetris.TestCollision(board, shape, x, y)
 	for _, block in ipairs(shape) do
 		local x = (block[1] + x)
@@ -8,9 +21,11 @@ function GTetris.TestCollision(board, shape, x, y)
 	end
 	return true
 end
+GTetris_TestCollision = GTetris.TestCollision
 
 function GTetris.ClearRow(board, row, width)
 	for col = 0, width do
+		if(!board[row]) then continue end
 		board[row][col] = 0
 	end
 end
@@ -18,10 +33,13 @@ end
 function GTetris.MoveRowDown(board, startfrom, width)
 	for i = startfrom, -20, -1 do
 		local pRow = i - 1
+		if(board[pRow] == nil) then
+			continue
+		end
 		if(pRow <= -20) then
 			GTetris.ClearRow(board, i, width)
 		else
-			board[i] = table.Copy(board[pRow])
+			board[i] = GTetris_CloneRow(board, pRow, width)
 		end
 	end
 end
@@ -71,6 +89,7 @@ function GTetris.CheckClearLine(board, width, height)
 
 	return lineCleared
 end
+GTetris_CheckClearLine = GTetris.CheckClearLine
 
 function GTetris.CheckAllClear(board, width, height)
 	for i = -20, height, 1 do

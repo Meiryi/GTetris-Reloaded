@@ -6,8 +6,8 @@ GTetris.Wallkicks = {
 			["12"] = {{1, 0},{1, -1},{0, 2},{1, 2}},
 			["21"] = {{1, 1},{-1, 0},{-1, 1},{0, -2},{0, 1},{-1, -2}},
 			["23"] = {{0, 1},{1, 0},{1, 1},{0, -2},{1, -2},{-2, 1},},
-			["32"] = {{0, -1},{2, -1},{-1, 0},{-1, -1},{0, 2},{-1, 2}},
-			["30"] = {{2, 1},{-1, 0},{-1, -1},{0, 2},{-1, 2}},
+			["32"] = {{2, 0},{0, -1},{2, -1},{-1, 0},{-1, -1},{0, 2},{-1, 2}},
+			["30"] = {{2, 0},{2, 1},{-1, 0},{-1, -1},{0, 2},{-1, 2}},
 			["03"] = {{0, -1},{1, 0},{1, 1},{0, -2},{1, -2}, {1, -1},{-2, -1},},
 			["13"] = {{0, 1},{0, -1},{1, 0},{-1, 0},},
 			["31"] = {{0, -1},{0, 1},{-1, 0},{1, 0},},
@@ -61,7 +61,36 @@ local offsets = {
 	[3] = {0, 1},
 	[4] = {1, 0},
 }
-function GTetris.CheckBonus(board, shape, origin)
+
+--[[
+	{
+		title = "T-Spin",
+		value = GTetris.Enums.ALLOWEDSPINS_TSPIN,
+	},
+	{
+		title = "All",
+		value = GTetris.Enums.ALLOWEDSPINS_ALL,
+	},
+	{
+		title = "None",
+		value = GTetris.Enums.ALLOWEDSPINS_NONE,
+	},
+	{
+		title = "Everything is a spin",
+		value = GTetris.Enums.ALLOWEDSPINS_STUPID,
+	},
+]]
+
+function GTetris.CheckBonus(board, piece, shape, origin, ruleset)
+	if(ruleset == 1) then
+		if(piece != GTetris.Block_T) then
+			return false
+		end
+	elseif(ruleset == 3) then
+		return false
+	elseif(ruleset == 4) then
+		return true
+	end
 	local bonus = true
 	for _, offset in ipairs(offsets) do
 		local x = origin.x + offset[1]
@@ -79,7 +108,7 @@ function GTetris_CheckBonus(board, shape, x, y)
 	for _, offset in ipairs(offsets) do
 		local x = x + offset[1]
 		local y = y + offset[2]
-		if(GTetris.TestCollision(board, shape, x, y)) then
+		if(GTetris_TestCollision(board, shape, x, y)) then
 			bonus = false
 			break
 		end

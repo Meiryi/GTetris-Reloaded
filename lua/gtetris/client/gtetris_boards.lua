@@ -266,6 +266,7 @@ function GTetris.SetupBoardLayer(attachTo)
 		end
 
 		layer.BoardIndex = 1
+		layer.ScaleSpeed = 1
 		layer.CreateBoard = function(boardID, localplayer)
 			local board = GTetris.CreatePanel(layer, 0, 0, 1, 1, Color(255, 0, 0, 255))
 				board.TargetWidth = layer.BoardBlockSize * layer.BoardWidth
@@ -308,7 +309,7 @@ function GTetris.SetupBoardLayer(attachTo)
 
 				board.TotalAttacks = 0
 				board.TotalBlockPlaced = 0
-				board.StartPlayingTime = 0
+				board.StartPlayingTime = SysTime() + 5
 
 				board.SpinText = ""
 				board.SpinTextColor = color_white
@@ -374,10 +375,25 @@ function GTetris.SetupBoardLayer(attachTo)
 					board.CurrentBlockSize = BlockSize
 					board.InputEnabled = layer.InputBlockTime < SysTime()
 
-					if(board.TargetScale < board.CurrentScale) then
-						board.CurrentScale = GTetris.IncFV(board.CurrentScale, (board.TargetScale - board.CurrentScale) * 0.2, board.TargetScale, board.CurrentScale)
+					if(!layer.WinnerAnim) then
+						if(board.FullyScaled) then
+							if(board.TargetScale < board.CurrentScale) then
+								board.CurrentScale = GTetris.IncFV(board.CurrentScale, (board.TargetScale - board.CurrentScale) * 0.2, board.TargetScale, board.CurrentScale)
+							else
+								board.CurrentScale = GTetris.IncFV(board.CurrentScale, (board.TargetScale - board.CurrentScale) * 0.2, board.CurrentScale, board.TargetScale)
+							end
+						else
+							if(board.TargetScale < board.CurrentScale) then
+								board.CurrentScale = GTetris.IncFV(board.CurrentScale, (board.TargetScale - board.CurrentScale) * 0.2 * layer.ScaleSpeed, board.TargetScale, board.CurrentScale)
+							else
+								board.CurrentScale = GTetris.IncFV(board.CurrentScale, (board.TargetScale - board.CurrentScale) * 0.2 * layer.ScaleSpeed, board.CurrentScale, board.TargetScale)
+							end
+							if(math.abs(board.TargetScale - board.CurrentScale) <= 0.01) then
+								board.FullyScaled = true
+							end
+						end
 					else
-						board.CurrentScale = GTetris.IncFV(board.CurrentScale, (board.TargetScale - board.CurrentScale) * 0.2, board.CurrentScale, board.TargetScale)
+						board.CurrentScale = board.CurrentScale + GTetris.GetFixedValue(0.004)
 					end
 
 					if(board.ShouldRenderBoard) then
@@ -439,6 +455,13 @@ function GTetris.SetupBoardLayer(attachTo)
 							matrix:SetScale(Vector(board.CurrentScale, board.CurrentScale, 1))
 							matrix:SetTranslation(Vector((board.CurrentXOffset || 0) + math.random(-shake, shake), (board.CurrentYOffset || 0) + board.DeathAnimationY + math.random(-shake, shake), 0))
 							matrix:Rotate(Angle(0, board.DeathAnimationRotation, 0))
+
+							if(layer.WinnerAnim) then
+								local scaleoffs = math.max(board.CurrentScale - board.TargetScale, 0)
+								local x, y = (board.TargetWidth * board.CurrentScale) * scaleoffs * 0.2, (board.TargetHeight * board.CurrentScale) * scaleoffs * 0.2 -- This is probably incorrect, but it works
+								matrix:Translate(Vector(-x, -y, 0))
+							end
+
 							cam.PushModelMatrix(matrix)
 								draw_RoundedBox(0, 0, 0, totalWide, totalTall, Color(30, 30, 30, 255))
 								if(!GTetris.OldRenderingMethod) then
@@ -698,6 +721,21 @@ function GTetris.SetupBoardLayer(attachTo)
 								end
 							end
 
+								local timepassed = math.max(SysTime() - board.StartPlayingTime, 0)
+								if(timepassed <= 0) then
+									timepassed = 1
+								end
+								local apm = board.TotalAttacks * (60 / timepassed)
+								local pps = board.TotalBlockPlaced / timepassed
+								local _, tall = GTetris.GetTextSize("GTetris_NotifyDesc", "100")
+								local _text_y = board:GetTall() * 0.6
+								draw.DrawText("Attacks : ", "GTetris_NotifyDesc", text_x, _text_y, color_white, TEXT_ALIGN_RIGHT)
+								draw.DrawText(string.format("%05.2f", math.Round(apm, 2)).."/m", "GTetris_NotifyDesc", text_x, _text_y + tall, color_white, TEXT_ALIGN_RIGHT)
+								_text_y = board:GetTall() * 0.725
+								draw.DrawText("Pieces : ", "GTetris_NotifyDesc", text_x, _text_y, color_white, TEXT_ALIGN_RIGHT)
+								draw.DrawText(string.format("%05.2f", math.Round(pps, 2)).."/s", "GTetris_NotifyDesc", text_x, _text_y + tall, color_white, TEXT_ALIGN_RIGHT)
+
+
 							local ax, ay = board:GetWide() * 0.5, board:GetTall() * 0.5
 							local size = board:GetTall() * 0.5
 							surface.SetMaterial(allclearMat)
@@ -755,6 +793,7 @@ function GTetris.SetupBoardLayer(attachTo)
 		end
 
 		layer.Alpha = 0
+		layer.WinnerAnimAlpha = 255
 		layer.Paint = function() end
 		layer.Think = function()
 			if(!layer.Exiting) then
@@ -767,6 +806,10 @@ function GTetris.SetupBoardLayer(attachTo)
 				end
 			end
 			layer:SetAlpha(layer.Alpha)
+			if(layer.WinnerAnim) then
+				layer.WinnerAnimAlpha = GTetris.IncFV(layer.WinnerAnimAlpha, -3, 0, 255)
+				layer:SetAlpha(layer.WinnerAnimAlpha)
+			end
 			if(layer.Sorting) then
 				local fraction = math.Clamp(math.ease.OutQuad(1 - (layer.CurrentSortingTime - SysTime()) / layer.SortingTime), 0, 1)
 				if(fraction >= 1) then

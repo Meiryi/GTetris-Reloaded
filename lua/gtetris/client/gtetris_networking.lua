@@ -33,7 +33,6 @@ end
 
 function GTetris.SendAttacks(attacks, x, y)
 	if(!GTetris.IsInMultiplayerGame()) then return end
-	attacks = attacks * GTetris.Rulesets.AttackMultiplier
 	net.Start("GTetris.SendAttack")
 	net.WriteInt(x, 7)
 	net.WriteInt(y, 7)
@@ -56,6 +55,9 @@ function GTetris.SendAttacks(attacks, x, y)
 	timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
 		if(!IsValid(layer) || layer.Amount > 2) then return end
 		GTetris.BoardHitSound(2)
+		if(IsValid(targetboard)) then
+			targetboard.ShakeScale = 3 * attacks
+		end
 	end)
 end
 
@@ -156,6 +158,7 @@ net.Receive("GTetris.SyncBoard", function(length, sender)
 	if(IsValid(board)) then
 		local boardData = GTetris.DecompressTable(data)
 		board.CurrentBoard = boardData
+		board.TotalBlockPlaced = board.TotalBlockPlaced + 1
 	end
 end)
 
@@ -202,6 +205,7 @@ net.Receive("GTetris.SendBoardText", function(length, sender)
 	local board = GTetris.GetBoard(boardID)
 	if(IsValid(board)) then
 		GTetris.AddBoardText(board, x, y, num, cancel)
+		board.TotalAttacks = board.TotalAttacks + num
 	end
 end)
 
@@ -274,6 +278,7 @@ net.Receive("GTetris.SendAttack", function(length, sender)
 	if(IsValid(attacker_board) && IsValid(victim_board)) then
 		if(victim_board == GTetris.GetLocalPlayer()) then
 			timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
+				GTetris.GetLocalPlayer().ShakeScale = 3 * attacks
 				GTetris.ReceiveAttack(attacks)
 				GTetris.SyncReceivedAttacks(GTetris.GetLocalPlayer())
 			end)
@@ -292,6 +297,9 @@ net.Receive("GTetris.SendAttack", function(length, sender)
 			GTetris.ReceiveAttackSound(attacks, 2)
 		end
 		timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
+			if(IsValid(victim_board) && IsValid(GTetris.BoardLayer) && GTetris.BoardLayer.Amount <= 3) then
+				victim_board.ShakeScale = 3 * attacks
+			end
 			if(!IsValid(victim_board) || !IsValid(GTetris.BoardLayer) || victim_board != GTetris.BoardLayer.FocusingBoard) then return end
 			GTetris.BoardHitSound(2)
 		end)
@@ -386,11 +394,18 @@ net.Receive("GTetris.EndGame", function(length, sender)
 	local layer = GTetris.BoardLayer
 	if(!IsValid(layer) || layer.Exiting) then return end
 	local winnerNick = net.ReadString()
-	timer.Simple(0.5, function()
+	GTetris.Playsound("sound/gtetris/game/finished.mp3", GTetris.UserData.SFXVol * 5)
+	GTetris.CurrentVolume = 0.33
+	layer.WinnerAnim = true
+	timer.Simple(1.33, function()
+		if(!IsValid(layer) || layer.Exiting) then
+			return
+		end
 		layer.Exiting = true
 		GTetris.PlayWinnerAnimSequence(winnerNick, function()
 			if(IsValid(GTetris.BoardLayer) && !GTetris.BoardLayer.Exiting) then return end
 			if(IsValid(GTetris.MuliplayerPanel)) then
+				GTetris.DesiredMusic = "gtetris/ost/room.mp3"
 				GTetris.MuliplayerPanel.Hide = false
 			end
 		end)

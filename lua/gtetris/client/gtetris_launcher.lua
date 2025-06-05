@@ -5,17 +5,17 @@ GTetris.UI_MULTIPLAYER = 3
 GTetris.UI_MULTIPLAYER_LOBBY = 4
 GTetris.UI_SETTINGS = 5
 
-local buttons = {
+GTetris_ButtonFuncs = {
 	{
 		title = "Singleplayer",
 		icon = "gtetris/singleplayer.png",
 		desc = "Challenge yourself",
 		func = function(ui)
 			local BaseUI = ui.SetupScene(GTetris.UI_SINGLEPLAYER)
-
 		end,
 		clickfunc = function(ui)
 			local BaseUI = ui.GetScene(GTetris.UI_SINGLEPLAYER)
+			GTetris.ChooseCalmMusic()
 			ui.SwitchScene(GTetris.UI_SINGLEPLAYER)
 			GTetris.SetupBoardLayer(BaseUI)
 			local board = GTetris.CreateBoard(LocalPlayer():SteamID64(), true)
@@ -24,7 +24,10 @@ local buttons = {
 			GTetris.AddBackButton(BaseUI, function()
 				ui.SwitchScene(GTetris.UI_MAIN)
 				GTetris.DestroyBoardLayer()
+				GTetris.DesiredMusic = "gtetris/ost/menu.mp3"
 			end)
+			local localplayer = GTetris.GetLocalPlayer()
+			localplayer.StartPlayingTime = SysTime()
 		end,
 	},
 	{
@@ -137,7 +140,7 @@ function GTetris.LaunchGame()
 		local maxoffset = ScreenScaleH(70)
 		local offset_step = ScreenScaleH(4)
 		local margin = ScreenScaleH(12)
-		for _, btn in ipairs(buttons) do
+		for index, btn in ipairs(GTetris_ButtonFuncs) do
 			local base = GTetris.CreatePanel(MainUI, StartX, StartY, scrw, buttonTall, Color(30, 30, 30, 255))
 			local icon = GTetris.CreatePanelMatAuto(base, margin, margin, buttonTall - margin * 2, buttonTall - margin * 2, btn.icon, color_white)
 			local _, _, title = GTetris.CreateLabel(base, icon:GetX() + icon:GetWide() + gap, gap, btn.title, "GTetris_UIFontBig", color_white)
@@ -145,7 +148,7 @@ function GTetris.LaunchGame()
 				base.Offset = 0
 				btn.func(ui)
 				base.ibutton = GTetris.ApplyIButton(base, function()
-					btn.clickfunc(ui)
+					GTetris_ButtonFuncs[index].clickfunc(ui)
 				end)
 				base.ibutton.Think = function()
 					if(base.ibutton:IsHovered()) then
@@ -155,10 +158,14 @@ function GTetris.LaunchGame()
 					end
 					base:SetX(StartX - base.Offset)
 				end
+				function base.ibutton:OnCursorEntered()
+					GTetris.Playsound("sound/", GTetris.UserData.SFXVol)
+				end
 
 			StartY = StartY + buttonTall + ScreenScaleH(4)
 		end
 
+	GTetris.DesiredMusic = "gtetris/ost/menu.mp3"
 	GTetris.MainUI = ui
 end
 
@@ -168,4 +175,10 @@ end)
 
 net.Receive("GTetris.OpenGame", function()
 	GTetris.LaunchGame()
+end)
+
+hook.Add("RenderScene", "GTetris_StopRendering", function()
+	if(IsValid(GTetris.MainUI)) then
+		return true
+	end
 end)

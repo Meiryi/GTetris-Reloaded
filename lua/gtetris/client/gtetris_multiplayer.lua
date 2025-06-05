@@ -116,6 +116,10 @@ function GTetris.MultiplayerUI(ui)
 
 	GTetris.MuliplayerPanel = base
 	GTetris.MuliplayerBaseUI = ui
+
+	net.Start("GTetris.GetRooms")
+	net.SendToServer()
+	GTetris.WaitingIndicator()
 end
 
 net.Receive("GTetris.GetRooms", function(length, sender)
@@ -181,6 +185,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		return
 	end
 	GTetris.DestroyLastBackButton()
+	GTetris.DesiredMusic = "gtetris/ost/room.mp3"
 	local _
 	local ui = GTetris.MuliplayerPanel
 	local scrw, scrh = ScrW(), ScrH()
@@ -236,6 +241,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			base.PlayerList:GetTall() - (base.PlayerList.Header:GetTall() + addbot_tall + gap * 2),
 			color_transparent
 		)
+--[[
 		base.PlayerList.Addbot = GTetris.CreatePanel(
 			base.PlayerList,
 			gap,
@@ -255,6 +261,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 				net.Start("GTetris.AddBot")
 				net.SendToServer()
 			end)
+]]
 		base.PlayerList.List.ReloadPlayers = function()
 			base.PlayerList.List:Clear()
 			local playerlist = {}
@@ -502,10 +509,25 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		_, _, base.StartText = GTetris.CreateLabel(base.Start, startWide * 0.5, startTall * 0.5, "Start", "GTetris_UIFontMedium", Color(255, 255, 255, 255))
 		base.StartText.CentPos()
 		GTetris.ApplyIButton(base.Start, function()
-			if(!GTetris.IsRoomHost()) then return end
+			if(GTetris.RoomData.started) then
+				net.Start("GTetris.SpectateGame")
+				net.SendToServer()
+				return
+			end
+			if(!GTetris.IsRoomHost()) then
+				return
+			end
 			net.Start("GTetris.StartGame")
 			net.SendToServer()
 		end)
+		base.StartText.Think = function()
+			if(GTetris.RoomData.started) then
+				base.StartText.UpdateText("Spectate Game")
+			else
+				base.StartText.UpdateText("Start")
+			end
+			base.StartText.CentPos()
+		end
 
 		GTetris.CurrentChatPanel = base.Chat.ChatScroll
 		GTetris.CurrentRoomPanel = base
@@ -515,10 +537,15 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		net.Start("GTetris.LeaveRoom")
 		net.SendToServer()
 		GTetris.ResetRoomData()
+		net.Start("GTetris.GetRooms")
+		net.SendToServer()
+		GTetris.WaitingIndicator()
 		GTetris.AddBackButton(GTetris.MuliplayerBaseUI, function()
 			GTetris.ResetRulesets()
 			GTetris.MainUI.SwitchScene(GTetris.UI_MAIN)
+			GTetris.DesiredMusic = "gtetris/ost/menu.mp3"
 		end)
+		GTetris.DesiredMusic = "gtetris/ost/menu.mp3"
 	end)
 end)
 

@@ -75,7 +75,7 @@ function GTetris.RotateLeft(localplayer)
 		localplayer
 	)) then
 		localplayer.CurrentRotationState = WishState
-		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
+		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, localplayer.CurrentPiece, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition, GTetris.Rulesets.AllowedSpins)
 		GTetris.PieceRotated(localplayer)
 	end
 end
@@ -99,7 +99,7 @@ function GTetris.RotateRight(localplayer)
 		localplayer
 	)) then
 		localplayer.CurrentRotationState = WishState
-		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
+		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, localplayer.CurrentPiece, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition, GTetris.Rulesets.AllowedSpins)
 		GTetris.PieceRotated(localplayer)
 	end
 end
@@ -126,7 +126,7 @@ function GTetris.Rotate180(localplayer)
 		localplayer
 	)) then
 		localplayer.CurrentRotationState = WishState
-		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition)
+		localplayer.Bonus = GTetris.CheckBonus(localplayer.CurrentBoard, localplayer.CurrentPiece, GTetris.Blocks[localplayer.CurrentPiece][WishState], localplayer.CurrentPosition, GTetris.Rulesets.AllowedSpins)
 		GTetris.PieceRotated(localplayer)
 	end
 end

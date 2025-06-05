@@ -48,15 +48,17 @@ function GTetris.TraceToBottom(localplayer)
 	end
 end
 
-function GTetris.PlacePiece(localplayer)
+function GTetris.PlacePiece(localplayer, dontplace)
 	local PlaceX = localplayer.CurrentPosition.x
 	local PlaceY = GTetris.TraceToBottom(localplayer)
 	local shape = GTetris.Blocks[localplayer.CurrentPiece][localplayer.CurrentRotationState]
 	local board = localplayer.CurrentBoard
-	for _, block in ipairs(shape) do
-		local x = block[1] + PlaceX
-		local y = block[2] + PlaceY
-		board[y][x] = localplayer.CurrentPiece
+	if(!dontplace) then
+		for _, block in ipairs(shape) do
+			local x = block[1] + PlaceX
+			local y = block[2] + PlaceY
+			board[y][x] = localplayer.CurrentPiece
+		end
 	end
 
 	if(#localplayer.CurrentPieces <= 6) then
@@ -90,6 +92,7 @@ function GTetris.PlacePiece(localplayer)
 	end
 
 	attacks = attacks + GTetris.GetAttacks(lineCleared, math.max(localplayer.CurrentCombo, 0), localplayer.Bonus, localplayer.CurrentB2B, GTetris.Rulesets.ComboTable)
+	attacks = attacks * GTetris.Rulesets.AttackMultiplier
 
 	if(GTetris.CheckAllClear(board, GTetris.Rulesets.Width - 1, GTetris.Rulesets.Height - 1)) then
 		attacks = attacks + 10
@@ -101,6 +104,8 @@ function GTetris.PlacePiece(localplayer)
 	if(attacks > 0) then
 		GTetris.ProcessAttacks(localplayer, attacks)
 	end
+
+	localplayer.TotalAttacks = localplayer.TotalAttacks + attacks
 
 	local canceled = 0
 	if(lineCleared > 0) then
@@ -184,6 +189,8 @@ function GTetris.PlacePiece(localplayer)
 	localplayer.CurrentRotationState = 4
 	localplayer.Bonus = false
 	localplayer.HoldUsed = false
+	localplayer.TotalBlockPlaced = localplayer.TotalBlockPlaced + 1
+
 	GTetris.PlaceblockSound(4)
 	GTetris.SendSound(GTetris.Enums.SOUND_PLACE)
 	GTetris.PieceResetted(localplayer)
