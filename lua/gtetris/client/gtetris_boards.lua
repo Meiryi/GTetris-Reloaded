@@ -492,9 +492,9 @@ function GTetris.SetupBoardLayer(attachTo)
 									local x = board:GetX() + board:GetWide()
 									local y = board:GetY()
 									local piece_padding = BlockSize * 3
-									local tw, th = GTetris.GetTextSize("GTetris_UIFontMedium", "Next Pieces")
+									local tw, th = GTetris.GetTextSize("GTetris_UIFontMedium", "#gtetris.nextpieces")
 									draw_RoundedBox(0, x, y, nextPiece_Width, nextPiece_Height, gridColor)
-									draw.DrawText("Next Pieces", "GTetris_UIFontMedium", x + nextPiece_Width * 0.5, 0, color_black, TEXT_ALIGN_CENTER)
+									draw.DrawText("#gtetris.nextpieces", "GTetris_UIFontMedium", x + nextPiece_Width * 0.5, 0, color_black, TEXT_ALIGN_CENTER)
 									x = x + lineSize * 2
 									y = y + th + lineSize
 									nextPiece_Width = nextPiece_Width - lineSize * 3
@@ -526,9 +526,9 @@ function GTetris.SetupBoardLayer(attachTo)
 									y = board:GetY()
 									local nextPiece_Width = layer.BoardBlockSize * 5
 									local nextPiece_Height = layer.BoardBlockSize * 4
-									local tw, th = GTetris.GetTextSize("GTetris_UIFontMedium", "Hold Piece")
+									local tw, th = GTetris.GetTextSize("GTetris_UIFontMedium", "#gtetris.holdpiece")
 									draw_RoundedBox(0, x - nextPiece_Width, y, nextPiece_Width, nextPiece_Height, gridColor)
-									draw.DrawText("Hold Piece", "GTetris_UIFontMedium", x - nextPiece_Width * 0.5, 0, color_black, TEXT_ALIGN_CENTER)
+									draw.DrawText("#gtetris.holdpiece", "GTetris_UIFontMedium", x - nextPiece_Width * 0.5, 0, color_black, TEXT_ALIGN_CENTER)
 									x = x - nextPiece_Width + lineSize * 2
 									y = y + th + lineSize
 									nextPiece_Width = nextPiece_Width - lineSize * 3
