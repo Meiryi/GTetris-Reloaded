@@ -73,9 +73,14 @@ function GTetris.MultiplayerUI(ui)
 				surface.SetDrawColor(200, 200, 200, 255)
 				surface.DrawOutlinedRect(0, 0, btn:GetWide(), btn:GetTall(), ScreenScaleH(1))
 			end
-			GTetris.ApplyIButton(btn, function()
+			local _btn = GTetris.ApplyIButton(btn, function()
 				button.func(ui)
+				GTetris.Playsound("sound/gtetris/ui/click_tick.mp3", GTetris.UserData.UIVol * 2)
 			end)
+
+			function _btn:OnCursorEntered()
+				GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 2)
+			end
 
 		startX = startX + btn:GetWide() + gap
 	end
@@ -94,12 +99,17 @@ function GTetris.MultiplayerUI(ui)
 						count.CentVer()
 						count:SetX(base:GetWide() - (count:GetWide() + gap * 3))
 
-					GTetris.ApplyIButton(base, function()
+					local btn = GTetris.ApplyIButton(base, function()
 						net.Start("GTetris.JoinRoom")
 						net.WriteString(room.roomid)
 						net.SendToServer()
 						GTetris.WaitingIndicator()
+						GTetris.Playsound("sound/gtetris/ui/click_enter.mp3", GTetris.UserData.UIVol * 3)
 					end)
+
+					function btn:OnCursorEntered()
+						GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 3)
+					end
 		end
 	end
 
@@ -508,10 +518,11 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		end
 		_, _, base.StartText = GTetris.CreateLabel(base.Start, startWide * 0.5, startTall * 0.5, "Start", "GTetris_UIFontMedium", Color(255, 255, 255, 255))
 		base.StartText.CentPos()
-		GTetris.ApplyIButton(base.Start, function()
+		local _btn = GTetris.ApplyIButton(base.Start, function()
 			if(GTetris.RoomData.started) then
 				net.Start("GTetris.SpectateGame")
 				net.SendToServer()
+				GTetris.Playsound("sound/gtetris/ui/click_enter.mp3", GTetris.UserData.UIVol * 3)
 				return
 			end
 			if(!GTetris.IsRoomHost()) then
@@ -519,7 +530,12 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			end
 			net.Start("GTetris.StartGame")
 			net.SendToServer()
+			GTetris.Playsound("sound/gtetris/ui/click_enter.mp3", GTetris.UserData.UIVol * 3)
 		end)
+		function _btn:OnCursorEntered()
+			GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 3)
+		end
+
 		base.StartText.Think = function()
 			if(GTetris.RoomData.started) then
 				base.StartText.UpdateText("Spectate Game")

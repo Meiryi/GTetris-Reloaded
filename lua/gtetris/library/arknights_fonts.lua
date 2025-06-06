@@ -8,6 +8,16 @@ surface.CreateFont("GTetris_Popup_1x", {
     antialias = true,
 })
 
+surface.CreateFont("GTetris-UIMedium.5x", {
+    font = "Arial",
+    extended = false,
+    size = ScreenScaleH(12),
+    weight = 1000,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+})
+
 surface.CreateFont("GTetris-UISmall2x", {
     font = "Arial",
     extended = false,

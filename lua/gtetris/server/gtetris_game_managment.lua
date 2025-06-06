@@ -195,10 +195,11 @@ net.Receive("GTetris.StartGame", function(length, sender)
 	}
 	GTetris.RoomsTargets[rID] = {}
 	local boardData = {
-		ruleset = roomdata.ruleset,
+		ruleset = table.Copy(roomdata.ruleset),
 		roomName = roomdata.roomname,
 		players = {},
 	}
+	boardData.ruleset.Seed = math.random(0, 32767)
 	GTetris.Rooms[rID].started = true
 	GTetris.PlayerDatas[rID] = {}
 	for _, player in pairs(roomdata.players) do

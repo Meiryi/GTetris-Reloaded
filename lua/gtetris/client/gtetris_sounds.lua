@@ -12,47 +12,47 @@ function GTetris.Playsound(sd, pvol)
 end
 
 function GTetris.PlaceblockSound(vol)
-	GTetris.Playsound("sound/gtetris/general/place.mp3", vol)
+	GTetris.Playsound("sound/gtetris/general/place.mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.ComboBreakSound()
-	GTetris.Playsound("sound/gtetris/combo/combobreak.mp3")
+	GTetris.Playsound("sound/gtetris/combo/combobreak.mp3", GTetris.UserData.SFXVol)
 end
 
 function GTetris.HoldSound(vol)
-	GTetris.Playsound("sound/gtetris/general/hold.mp3", vol)
+	GTetris.Playsound("sound/gtetris/general/hold.mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.RotateSound(bonus, vol)
 	if(!bonus) then
-		GTetris.Playsound("sound/gtetris/general/rotate.mp3", vol)
+		GTetris.Playsound("sound/gtetris/general/rotate.mp3", vol * GTetris.UserData.SFXVol)
 	else
-		GTetris.Playsound("sound/gtetris/general/rotatebonus.mp3", vol)
+		GTetris.Playsound("sound/gtetris/general/rotatebonus.mp3", vol * GTetris.UserData.SFXVol)
 	end
 end
 
 function GTetris.MoveSound(vol)
-	GTetris.Playsound("sound/gtetris/general/move.mp3", vol)
+	GTetris.Playsound("sound/gtetris/general/move.mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.SoftDropSound(vol)
-	GTetris.Playsound("sound/gtetris/general/softdrop.mp3", vol)
+	GTetris.Playsound("sound/gtetris/general/softdrop.mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.BoardHitSound(vol)
 	local index = math.random(1, 3)
-	GTetris.Playsound("sound/gtetris/garbage/hit"..index..".mp3", vol)
+	GTetris.Playsound("sound/gtetris/garbage/hit"..index..".mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.BoardUpSound(vol)
-	GTetris.Playsound("sound/gtetris/garbage/up.mp3", vol)
+	GTetris.Playsound("sound/gtetris/garbage/up.mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.DeathSound(focus, vol)
 	if(focus) then
-		GTetris.Playsound("sound/gtetris/die.mp3", vol)
+		GTetris.Playsound("sound/gtetris/die.mp3", vol * GTetris.UserData.SFXVol)
 	else
-		GTetris.Playsound("sound/gtetris/die_background.mp3", vol)
+		GTetris.Playsound("sound/gtetris/die_background.mp3", vol * GTetris.UserData.SFXVol)
 	end
 end
 
@@ -65,7 +65,7 @@ function GTetris.SendAttackSound(lines, vol)
 	else
 		index = 1
 	end
-	GTetris.Playsound("sound/gtetris/garbage/send"..index..".mp3", vol)
+	GTetris.Playsound("sound/gtetris/garbage/send"..index..".mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.ReceiveAttackSound(lines, vol)
@@ -77,21 +77,21 @@ function GTetris.ReceiveAttackSound(lines, vol)
 	else
 		index = 1
 	end
-	GTetris.Playsound("sound/gtetris/garbage/receive"..index..".mp3", vol)
+	GTetris.Playsound("sound/gtetris/garbage/receive"..index..".mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.AllClearSound(vol)
-	GTetris.Playsound("sound/gtetris/general/allclear.mp3", vol)
+	GTetris.Playsound("sound/gtetris/general/allclear.mp3", vol * GTetris.UserData.SFXVol)
 end
 
 function GTetris.PlayClearSound(lines, spinBonus, combo, attackBonus, vol)
 	if(spinBonus) then
-		GTetris.Playsound("sound/gtetris/general/clearbonus.mp3", vol)
+		GTetris.Playsound("sound/gtetris/general/clearbonus.mp3", vol * GTetris.UserData.SFXVol)
 	else
 		if(lines >= 4) then
-			GTetris.Playsound("sound/gtetris/general/quad.mp3", vol)
+			GTetris.Playsound("sound/gtetris/general/quad.mp3", vol * GTetris.UserData.SFXVol)
 		else
-			GTetris.Playsound("sound/gtetris/general/clear.mp3", vol)
+			GTetris.Playsound("sound/gtetris/general/clear.mp3", vol * GTetris.UserData.SFXVol)
 		end
 	end
 
@@ -100,6 +100,6 @@ function GTetris.PlayClearSound(lines, spinBonus, combo, attackBonus, vol)
 		if(attackBonus) then
 			index = index.."bonus"
 		end
-		GTetris.Playsound("sound/gtetris/combo/"..index..".mp3", vol)
+		GTetris.Playsound("sound/gtetris/combo/"..index..".mp3", vol * GTetris.UserData.SFXVol)
 	end
 end

@@ -122,7 +122,7 @@ GTetris.Rulesets = {}
 -- Gameplay
 GTetris.Rulesets.Width = 10
 GTetris.Rulesets.Height = 20
-GTetris.Rulesets.Gravity = 0
+GTetris.Rulesets.Gravity = 1
 GTetris.Rulesets.AutolockTime = 1
 GTetris.Rulesets.BagSystem = GTetris.Enums.BAGSYS_7BAG
 GTetris.Rulesets.Seed = 1024
@@ -144,7 +144,7 @@ GTetris.Rulesets.ComboTable = GTetris.Enums.COMBOTABLE_MULTIPLIER
 GTetris.Rulesets.Default = {}
 GTetris.Rulesets.Default.Width = 10
 GTetris.Rulesets.Default.Height = 20
-GTetris.Rulesets.Default.Gravity = 0
+GTetris.Rulesets.Default.Gravity = 1
 GTetris.Rulesets.Default.AutolockTime = 1
 GTetris.Rulesets.Default.BagSystem = GTetris.Enums.BAGSYS_7BAG
 GTetris.Rulesets.Default.Seed = 1024

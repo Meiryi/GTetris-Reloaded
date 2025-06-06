@@ -1,8 +1,3 @@
-GTetris.Input_DAS = 0.115
-GTetris.Input_ARR = 0
-GTetris.Input_SDF = 50
-
-
 local keyStates = {}
 local currentDAS = 0
 local currentARR = 0
@@ -172,22 +167,22 @@ hook.Add("Think", "GTetris_InputHandler", function()
 	if(!IsValid(localplayer) || !localplayer.Alive || !localplayer.InputEnabled) then return end
 	local systime = SysTime()
 	for key, _ in pairs(dasKeys) do
-		local keycode = GTetris.Keys[key]
+		local keycode = GTetris.UserData.Keys[key]
 		if(input.IsKeyDown(keycode)) then
 			if(!keyStates[key]) then
 				keyStates[key] = true
 				GTetris[key](localplayer)
-				currentDAS = systime + GTetris.Input_DAS
+				currentDAS = systime + GTetris.UserData.Input_DAS
 			end
 			if(currentDAS < systime && currentARR < systime) then
-				if(GTetris.Input_ARR <= 0) then
+				if(GTetris.UserData.Input_ARR <= 0) then
 					for i = 1, GTetris.Rulesets.Width do
 						GTetris[key](localplayer)
 					end
 				else
 					GTetris[key](localplayer)
 				end
-				currentARR = systime + GTetris.Input_ARR
+				currentARR = systime + GTetris.UserData.Input_ARR
 			end
 		else
 			if(keyStates[key]) then
@@ -196,7 +191,7 @@ hook.Add("Think", "GTetris_InputHandler", function()
 		end
 	end
 	for key, _ in pairs(oneShotKeys) do
-		local keycode = GTetris.Keys[key]
+		local keycode = GTetris.UserData.Keys[key]
 		if(input.IsKeyDown(keycode)) then
 			if(!keyStates[key]) then
 				GTetris[key](localplayer)
@@ -208,16 +203,16 @@ hook.Add("Think", "GTetris_InputHandler", function()
 			end
 		end
 	end
-	if(input.IsKeyDown(GTetris.Keys.Softdrop)) then
+	if(input.IsKeyDown(GTetris.UserData.Keys.Softdrop)) then
 		if(currentSDF < systime) then
-			if(GTetris.Input_SDF >= 50) then
+			if(GTetris.UserData.Input_SDF >= 50) then
 				for i = 1, GTetris.Rulesets.Height do
 					GTetris.Softdrop(localplayer)
 				end
 			else
 				GTetris.Softdrop(localplayer)
 			end
-			currentSDF = systime + (1 / GTetris.Input_SDF)
+			currentSDF = systime + (1 / GTetris.UserData.Input_SDF)
 		end
 	end
 end)

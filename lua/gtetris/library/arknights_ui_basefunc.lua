@@ -489,8 +489,11 @@ function GTetris.InvisButton(parent, x, y, w, h, func)
             draw.RoundedBox(0, 0, 0, btn:GetWide(), btn:GetTall(), Color(255, 255, 255, btn.Alpha))
             btn.Paint2x()
         end
-        btn.DoClick = func
-        
+        --btn.DoClick = func
+        function btn.OnMousePressed()
+            func()
+        end
+
         return btn
 end
 

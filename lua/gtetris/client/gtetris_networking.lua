@@ -56,7 +56,7 @@ function GTetris.SendAttacks(attacks, x, y)
 		if(!IsValid(layer) || layer.Amount > 2) then return end
 		GTetris.BoardHitSound(2)
 		if(IsValid(targetboard)) then
-			targetboard.ShakeScale = 3 * attacks
+			targetboard.ShakeScale = (3 * attacks) * GTetris.UserData.BoardShaking
 		end
 	end)
 end
@@ -278,7 +278,7 @@ net.Receive("GTetris.SendAttack", function(length, sender)
 	if(IsValid(attacker_board) && IsValid(victim_board)) then
 		if(victim_board == GTetris.GetLocalPlayer()) then
 			timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
-				GTetris.GetLocalPlayer().ShakeScale = 3 * attacks
+				GTetris.GetLocalPlayer().ShakeScale = (3 * attacks)  * GTetris.UserData.BoardShaking
 				GTetris.ReceiveAttack(attacks)
 				GTetris.SyncReceivedAttacks(GTetris.GetLocalPlayer())
 			end)
@@ -298,7 +298,7 @@ net.Receive("GTetris.SendAttack", function(length, sender)
 		end
 		timer.Simple(GTetris.Rulesets.AttackArriveTime, function()
 			if(IsValid(victim_board) && IsValid(GTetris.BoardLayer) && GTetris.BoardLayer.Amount <= 3) then
-				victim_board.ShakeScale = 3 * attacks
+				victim_board.ShakeScale = (3 * attacks)  * GTetris.UserData.BoardShaking
 			end
 			if(!IsValid(victim_board) || !IsValid(GTetris.BoardLayer) || victim_board != GTetris.BoardLayer.FocusingBoard) then return end
 			GTetris.BoardHitSound(2)
