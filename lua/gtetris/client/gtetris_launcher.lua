@@ -7,9 +7,9 @@ GTetris.UI_SETTINGS = 5
 
 GTetris_ButtonFuncs = {
 	{
-		title = "Singleplayer",
+		title = "#maxplayers_1",
 		icon = "gtetris/singleplayer.png",
-		desc = "Challenge yourself",
+		desc = "#gtetris.chalyours",
 		func = function(ui)
 			local BaseUI = ui.SetupScene(GTetris.UI_SINGLEPLAYER)
 		end,
@@ -31,9 +31,9 @@ GTetris_ButtonFuncs = {
 		end,
 	},
 	{
-		title = "Multiplayer",
+		title = "#gtetris.multiplayer",
 		icon = "gtetris/multiplayer.png",
-		desc = "Play against players on the server",
+		desc = "#gtetris.multiplayerdesc",
 		func = function(ui)
 			local BaseUI = ui.SetupScene(GTetris.UI_MULTIPLAYER)
 		end,
@@ -47,9 +47,9 @@ GTetris_ButtonFuncs = {
 		end,
 	},
 	{
-		title = "Settings",
+		title = "#spawnmenu.utilities.settings",
 		icon = "gtetris/settings.png",
-		desc = "Change game settings",
+		desc = "#gtetris.change.gsettings",
 		func = function(ui)
 			local BaseUI = ui.SetupScene(GTetris.UI_SETTINGS)
 		end,
@@ -62,9 +62,9 @@ GTetris_ButtonFuncs = {
 		end,
 	},
 	{
-		title = "Quit",
+		title = "#quit",
 		icon = "gtetris/quit.png",
-		desc = "Quit the game",
+		desc = "#gtetris.quitdesc",
 		func = function(ui)
 
 		end,
