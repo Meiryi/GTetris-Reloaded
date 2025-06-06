@@ -8,7 +8,7 @@ GTetris.RoomData = GTetris.RoomData || {
 
 local buttons = {
 	{
-		title = "Create Rooms",
+		title = "#gtetris.createrooms",
 		func = function(ui)
 			net.Start("GTetris.CreateRoom")
 			net.SendToServer()
@@ -16,7 +16,7 @@ local buttons = {
 		end,
 	},
 	{
-		title = "Refresh",
+		title = "#refresh",
 		func = function(ui)
 			net.Start("GTetris.GetRooms")
 			net.SendToServer()
@@ -148,7 +148,7 @@ function GTetris.AddNotify(title, desc)
 
 	local btnTall = inner:GetTall() * 0.15
 	local btn = GTetris.CreatePanel(inner, 0, inner:GetTall() - btnTall, inner:GetWide(), btnTall, Color(17, 17, 17, 255))
-	local _, _, confirm = GTetris.CreateLabel(btn, btn:GetWide() * 0.5, btn:GetTall() * 0.5, "OK", "GTetris_NotifyTitle", Color(255, 255, 255, 255))
+	local _, _, confirm = GTetris.CreateLabel(btn, btn:GetWide() * 0.5, btn:GetTall() * 0.5, "#dialog.ok", "GTetris_NotifyTitle", Color(255, 255, 255, 255))
 		confirm.CentPos()
 	GTetris.ApplyIButton(btn, function()
 		base.Exiting = true
@@ -232,7 +232,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		local panelHeight = h * 0.85
 		local addbot_tall = h * 0.07
 		base.PlayerList = GTetris.CreatePanel(base.Inner, gap, gap, w * 0.2 - gap, panelHeight, Color(20, 20, 20, 255))
-		base.PlayerList.Header = CreateHeader(base.PlayerList, "Players")
+		base.PlayerList.Header = CreateHeader(base.PlayerList, "#gtetris.players")
 		base.PlayerList.List = GTetris.CreateScroll(
 			base.PlayerList,
 			0,
@@ -298,16 +298,16 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		GTetris.CurrentPlayerList = base.PlayerList.List
 
 		base.SettingsPanel = GTetris.CreatePanel(base.Inner, base.PlayerList:GetWide() + gap * 2, gap, w * 0.6 - gap * 2, panelHeight, Color(20, 20, 20, 255))
-		base.SettingsPanel.Header = CreateHeader(base.SettingsPanel, "Game Settings")
+		base.SettingsPanel.Header = CreateHeader(base.SettingsPanel, "#gtetris.gamesettings")
 		base.SettingsPanel.Scroll = GTetris.CreateScroll(base.SettingsPanel, 0, base.SettingsPanel.Header:GetTall(), base.SettingsPanel:GetWide(), base.SettingsPanel:GetTall() - base.SettingsPanel.Header:GetTall(), Color(20, 20, 20, 255))
 		local sbase = base.SettingsPanel.Scroll
 
-		GTetris.InsertOptionTitle(sbase, "Room Settings")
+		GTetris.InsertOptionTitle(sbase, "#gtetris.roomsettings")
 		GTetris.InsertOptionLine(sbase)
 		local __base = GTetris.CreatePanel(sbase, 0, 0, sbase:GetWide(), sbase:GetTall() * 0.08, Color(100, 255, 255, 0))
 			__base:Dock(TOP)
 			__base:DockMargin(0, ScreenScaleH(2), 0, ScreenScaleH(2))
-			local _, _, title = GTetris.CreateLabel(__base, ScreenScaleH(4), __base:GetTall() * 0.5, "Room Name", "GTetris_OptionsDesc", Color(200, 200, 200, 255))
+			local _, _, title = GTetris.CreateLabel(__base, ScreenScaleH(4), __base:GetTall() * 0.5, "#gtetris.roomname", "GTetris_OptionsDesc", Color(200, 200, 200, 255))
 				title.CentVer()
 				local wide = __base:GetWide() - (title:GetX() + title:GetWide() + ScreenScaleH(8))
 				local entry = GTetris.CreateTextEntry(
@@ -316,7 +316,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 					ScreenScaleH(2),
 					wide,
 					__base:GetTall() - ScreenScaleH(4),
-					"Room's name",
+					"#gtetris.roomsname",
 					"GTetris_OptionsDesc",
 					Color(200, 200, 200, 255),
 					Color(50, 50, 50, 255),
@@ -340,7 +340,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 				end
 				function entry:OnEnter(val)
 					if(utf8.len(val) > 32) then
-						GTetris.AddNotify("Room name too long", "Room name must be less than 32 characters")
+						GTetris.AddNotify("#gtetris.longroom.namewarn", "#gtetris.longroom.charwarn")
 						entry:SetValue("")
 						return
 					end
@@ -354,7 +354,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			GTetris.SyncRoomData()
 		end)
 		GTetris.InsertOptionGap(sbase, 4)
-		GTetris.InsertOptionTitle(sbase, "Gameplay")
+		GTetris.InsertOptionTitle(sbase, "#gtetris.gameplay")
 		GTetris.InsertOptionLine(sbase)
 		GTetris.InsertOptionGap(sbase, 4)
 		GTetris.InsertValueChanger(sbase, "Playfield Width", "Rulesets->Width", 4, 10, 1, function(pointer, newValue)
@@ -370,7 +370,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			GTetris.SendVarModify(pointer, newValue, GTetris.DataType_FLOAT)
 		end)
 		GTetris.InsertOptionGap(sbase, 4)
-		GTetris.InsertOptionTitle(sbase, "Piece Generation")
+		GTetris.InsertOptionTitle(sbase, "#gtetris.piecegen")
 		GTetris.InsertOptionLine(sbase)
 		GTetris.InsertOptionGap(sbase, 4)
 		GTetris.InsertValueCheckBox(sbase, "7 Bag", "Rulesets->BagSystem", GTetris.Enums.BAGSYS_7BAG, function(pointer, newValue)
@@ -386,7 +386,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			GTetris.SendVarModify(pointer, newValue, GTetris.DataType_INT)
 		end)
 		GTetris.InsertOptionGap(sbase, 4)
-		GTetris.InsertOptionTitle(sbase, "Spins Bonus & Wallkicks")
+		GTetris.InsertOptionTitle(sbase, "#gtetris.spinbonus.wallk")
 		GTetris.InsertOptionLine(sbase)
 		GTetris.InsertOptionGap(sbase, 4)
 		GTetris.InsertOptionDesc(sbase, "Spins")
@@ -453,7 +453,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 
 		local entryTall = base.SettingsPanel:GetTall() * 0.07
 		base.Chat = GTetris.CreatePanel(base.Inner, base.PlayerList:GetWide() + base.SettingsPanel:GetWide() + gap * 3, gap, w * 0.2 - gap, panelHeight, Color(20, 20, 20, 255))
-		base.Chat.Header = CreateHeader(base.Chat, "Chat")
+		base.Chat.Header = CreateHeader(base.Chat, "#gtetris.chat")
 		base.Chat.ChatScroll = GTetris.CreateScroll(
 			base.Chat,
 			0,
@@ -462,7 +462,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			base.Chat:GetTall() - (entryTall + gap * 2 + base.Chat.Header:GetTall()),
 			color_transparent
 		)
-		local entry = GTetris.CreateTextEntry(base.Chat, gap, base.Chat:GetTall() - (entryTall + gap), base.Chat:GetWide() - gap * 2, entryTall, "Type something..", "GTetris_ChatFont", Color(200, 200, 200, 255), Color(100, 100, 100, 255), Color(10, 10, 10, 255))
+		local entry = GTetris.CreateTextEntry(base.Chat, gap, base.Chat:GetTall() - (entryTall + gap), base.Chat:GetWide() - gap * 2, entryTall, "#gtetris.typesmth", "GTetris_ChatFont", Color(200, 200, 200, 255), Color(100, 100, 100, 255), Color(10, 10, 10, 255))
 		entry.Alpha = 50
 		entry.Paint2x = function()
 			if(entry:HasFocus()) then
@@ -490,7 +490,7 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 			textlimit.UpdateText("0/64")
 			textlimit:SetTextColor(Color(200, 200, 200, 255))
 			if(len > 64) then
-				GTetris.AddNotify("Failed to send message", "Your message is too long!")
+				GTetris.AddNotify("#gtetris.maxcharwarnmsg", "#gtetris.maxcharwarnmsgdesc")
 				entry:SetText("")
 				return
 			end
@@ -522,9 +522,9 @@ net.Receive("GTetris.JoinRoom", function(length, sender)
 		end)
 		base.StartText.Think = function()
 			if(GTetris.RoomData.started) then
-				base.StartText.UpdateText("Spectate Game")
+				base.StartText.UpdateText("#gtetris.specgame")
 			else
-				base.StartText.UpdateText("Start")
+				base.StartText.UpdateText("#gtetris.start")
 			end
 			base.StartText.CentPos()
 		end
