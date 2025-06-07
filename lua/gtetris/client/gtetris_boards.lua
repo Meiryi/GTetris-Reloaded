@@ -882,10 +882,10 @@ function GTetris.SetSpinText(boardID, piece)
 end
 
 local texts = {
-	"Single",
-	"Double",
-	"Triple",
-	"Quad",
+	"#gtetris.single",
+	"#gtetris.double",
+	"#gtetris.triple",
+	"#gtetris.quad",
 }
 function GTetris.SetClearText(boardID, lines)
 	if(!IsValid(GTetris.BoardLayer)) then return end
