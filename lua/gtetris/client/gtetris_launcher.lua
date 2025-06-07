@@ -195,3 +195,4 @@ hook.Add("RenderScene", "GTetris_StopRendering", function()
 		return true
 	end
 end)
+--]]
