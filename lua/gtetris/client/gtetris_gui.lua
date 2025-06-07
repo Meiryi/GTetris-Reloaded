@@ -9,6 +9,7 @@ function GTetris.AddBackButton(parent, func, nooverride)
 	local btn = GTetris.ApplyIButton(base, function()
 		base.Exiting = true
 		func()
+		GTetris.Playsound("sound/gtetris/ui/back.mp3", GTetris.UserData.UIVol * 4)
 	end)
 		title.CentPos()
 		base:SetZPos(32766)
@@ -36,6 +37,9 @@ function GTetris.AddBackButton(parent, func, nooverride)
 		end
 	if(!nooverride) then
 		GTetris.LastBackButton = base
+	end
+	function btn:OnCursorEntered()
+		GTetris.Playsound("sound/gtetris/ui/button_tick.mp3", GTetris.UserData.UIVol * 3)
 	end
 end
 
@@ -102,6 +106,7 @@ function GTetris.InsertValueChanger(parent, text, pointer, mins, maxs, add, func
 				if(keystate && !dec.OldKeyState) then
 					GTetris.SetPointerValue(GTetris, pointer, math.Round(math.Clamp(value - add, mins, maxs), 2))
 					func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+					GTetris.Playsound("sound/gtetris/ui/click_tick.mp3", GTetris.UserData.UIVol * 3)
 					dec.DASTime = systime + 0.15
 				end
 				if(keystate && dec.ARRTime < systime && dec.DASTime < systime) then
@@ -130,6 +135,7 @@ function GTetris.InsertValueChanger(parent, text, pointer, mins, maxs, add, func
 				if(keystate && !inc.OldKeyState) then
 					GTetris.SetPointerValue(GTetris, pointer, math.Round(math.Clamp(value + add, mins, maxs), 2))
 					func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+					GTetris.Playsound("sound/gtetris/ui/click_tick.mp3", GTetris.UserData.UIVol * 3)
 					inc.DASTime = systime + 0.15
 				end
 				if(keystate && inc.ARRTime < systime && inc.DASTime < systime) then
@@ -143,6 +149,13 @@ function GTetris.InsertValueChanger(parent, text, pointer, mins, maxs, add, func
 			end
 		end
 
+		function inc:OnCursorEntered()
+			GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 3)
+		end
+
+		function dec:OnCursorEntered()
+			GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 3)
+		end
 		local _, _, title = GTetris.CreateLabel(base, inc:GetX() + inc:GetWide() + gap, base:GetTall() * 0.5, "", "GTetris_OptionsDesc", white)
 			title.CentVer()
 			title.Think = function()
@@ -170,6 +183,10 @@ function GTetris.InsertValueCheckBox(parent, text, pointer, value, func)
 			if(!GTetris.IsRoomHost()) then return end
 			GTetris.SetPointerValue(GTetris, pointer, value)
 			func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+			GTetris.Playsound("sound/gtetris/ui/click_tick.mp3", GTetris.UserData.UIVol * 3)
+		end
+		function button:OnCursorEntered()
+			GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 3)
 		end
 		local _, _, text = GTetris.CreateLabel(base, button:GetX() + button:GetWide() + gap, base:GetTall() * 0.5, text, "GTetris_OptionsDesc", white)
 			text.CentVer()
@@ -193,6 +210,10 @@ function GTetris.InsertValueToggleBox(parent, text, pointer, func)
 			if(!GTetris.IsRoomHost()) then return end
 			GTetris.SetPointerValue(GTetris, pointer, !GTetris.GetPointerValue(GTetris, pointer))
 			func(pointer, GTetris.GetPointerValue(GTetris, pointer))
+			GTetris.Playsound("sound/gtetris/ui/click_tick.mp3", GTetris.UserData.UIVol * 3)
+		end
+		function button:OnCursorEntered()
+			GTetris.Playsound("sound/gtetris/ui/tick.mp3", GTetris.UserData.UIVol * 3)
 		end
 		local _, _, text = GTetris.CreateLabel(base, button:GetX() + button:GetWide() + gap, base:GetTall() * 0.5, text, "GTetris_OptionsDesc", white)
 			text.CentVer()

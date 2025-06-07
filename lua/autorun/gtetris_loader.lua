@@ -14,6 +14,7 @@ if(CLIENT) then
 		end
 	end
 else
+	resource.AddWorkshop("3493944924")
 	local loadOrder = {
 		"shared",
 		"server",
@@ -35,3 +36,5 @@ else
 		end
 	end
 end
+
+file.CreateDir("gtetris_reloaded")

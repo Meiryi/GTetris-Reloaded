@@ -118,11 +118,14 @@ end
 
 hook.Add("DrawOverlay", "GTetris_MusicController", function()
 	if(IsValid(GTetris.MainUI)) then
+		if(!GTetris.UserData || !GTetris.UserData.MusicVol) then
+			return
+		end
 		if(IsValid(GTetris.CurrentMusicChannel)) then
 			if(GTetris.CurrentMusic == GTetris.DesiredMusic) then
-				GTetris.CurrentVolume = math.Clamp(GTetris.CurrentVolume + GTetris.GetFixedValue(0.025), 0, 1)
+				GTetris.CurrentVolume = math.Clamp(GTetris.CurrentVolume + GTetris.GetFixedValue(0.025), 0, GTetris.UserData.MusicVol)
 			else
-				GTetris.CurrentVolume = math.Clamp(GTetris.CurrentVolume - GTetris.GetFixedValue(0.025), 0, 1)
+				GTetris.CurrentVolume = math.Clamp(GTetris.CurrentVolume - GTetris.GetFixedValue(0.025), 0, GTetris.UserData.MusicVol)
 				if(GTetris.CurrentVolume <= 0) then
 					GTetris.PlayMusic(GTetris.DesiredMusic)
 				end

@@ -56,6 +56,7 @@ GTetris_ButtonFuncs = {
 		clickfunc = function(ui)
 			local BaseUI = ui.GetScene(GTetris.UI_SETTINGS)
 			ui.SwitchScene(GTetris.UI_SETTINGS)
+			GTetris.SettingsUI(BaseUI)
 			GTetris.AddBackButton(BaseUI, function()
 				ui.SwitchScene(GTetris.UI_MAIN)
 			end)
@@ -149,6 +150,7 @@ function GTetris.LaunchGame()
 				btn.func(ui)
 				base.ibutton = GTetris.ApplyIButton(base, function()
 					GTetris_ButtonFuncs[index].clickfunc(ui)
+					GTetris.Playsound("sound/gtetris/ui/click.mp3", GTetris.UserData.UIVol * 2)
 				end)
 				base.ibutton.Think = function()
 					if(base.ibutton:IsHovered()) then
@@ -159,7 +161,7 @@ function GTetris.LaunchGame()
 					base:SetX(StartX - base.Offset)
 				end
 				function base.ibutton:OnCursorEntered()
-					GTetris.Playsound("sound/", GTetris.UserData.SFXVol)
+					GTetris.Playsound("sound/gtetris/ui/button_tick.mp3", GTetris.UserData.UIVol * 2)
 				end
 
 			StartY = StartY + buttonTall + ScreenScaleH(4)
@@ -177,6 +179,17 @@ net.Receive("GTetris.OpenGame", function()
 	GTetris.LaunchGame()
 end)
 
+local printed = false
+hook.Add("HUDPaint", "GTetris_Notify", function()
+	local localply = LocalPlayer()
+	if(printed || !IsValid(localply)) then
+		return
+	end
+	localply:ChatPrint("[GTetris] Type '/tetris' to open the game")
+	printed = true
+end)
+
+--[[
 hook.Add("RenderScene", "GTetris_StopRendering", function()
 	if(IsValid(GTetris.MainUI)) then
 		return true
