@@ -161,40 +161,40 @@ end
 
 local buttons = {
 	{
-		title = "Controls",
+		title = "#gtetris.controlstitle",
 		func = function(ui)
-			GTetris.InsertKeybinder(ui, "Move left", "Left")
+			GTetris.InsertKeybinder(ui, "#gtetris.movel", "Left")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Move right", "Right")
+			GTetris.InsertKeybinder(ui, "#gtetris.mover", "Right")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Softdrop", "Softdrop")
+			GTetris.InsertKeybinder(ui, "#gtetris.softdrop", "Softdrop")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Harddrop", "Drop")
+			GTetris.InsertKeybinder(ui, "#gtetris.harddrop", "Drop")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Hold piece", "Hold")
+			GTetris.InsertKeybinder(ui, "#gtetris.holdpiece", "Hold")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Rotate clockwise", "RotateLeft")
+			GTetris.InsertKeybinder(ui, "#gtetris.rotate.l", "RotateLeft")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Rotate counterclockwise", "RotateRight")
+			GTetris.InsertKeybinder(ui, "#gtetris.rotate.r", "RotateRight")
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertKeybinder(ui, "Rotate 180 degree", "Rotate180")
+			GTetris.InsertKeybinder(ui, "#gtetris.rotate180", "Rotate180")
 		end,
 	},
 	{
-		title = "Handling",
+		title = "#gtetris.handling",
 		func = function(ui)
 			--parent, title, key, min, max, drawfunc, updatefunc, step
-			GTetris.InsertSlider(ui, "ARR (Auto-Repeat Rate)", "Input_ARR", 0, 0.1, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.arr", "Input_ARR", 0, 0.1, function(val)
 				local ms = math.Round(val * 1000, 2)
 				return ms.."ms ("..(ms / 16).."f)"
 			end)
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertSlider(ui, "DAS (Delayed Auto Shift)", "Input_DAS", 0.01, 0.35, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.das", "Input_DAS", 0.01, 0.35, function(val)
 				local ms = math.Round(val * 1000, 2)
 				return ms.."ms ("..(ms / 16).."f)"
 			end)
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertSlider(ui, "SDF (Soft Drop Factor)", "Input_SDF", 1, 50, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.sdf", "Input_SDF", 1, 50, function(val)
 				local str = val
 				if(val >= 50) then
 					str = "Instant"
@@ -204,25 +204,25 @@ local buttons = {
 		end,
 	},
 	{
-		title = "Volume & Audio",
+		title = "#gtetris.va",
 		func = function(ui)
-			GTetris.InsertSlider(ui, "Music volume", "MusicVol", 0, 2, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.musicvol", "MusicVol", 0, 2, function(val)
 				return (val * 100).."%"
 			end)
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertSlider(ui, "SFX volume", "SFXVol", 0, 2, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.sfxvol", "SFXVol", 0, 2, function(val)
 				return (val * 100).."%"
 			end)
 			GTetris.InsertLine(ui, 6)
-			GTetris.InsertSlider(ui, "UI volume", "UIVol", 0, 2, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.uivol", "UIVol", 0, 2, function(val)
 				return (val * 100).."%"
 			end)
 		end,
 	},
 	{
-		title = "Gameplay",
+		title = "#gtetris.gameplay",
 		func = function(ui)
-			GTetris.InsertSlider(ui, "Damage shakiness", "BoardShaking", 0, 3, function(val)
+			GTetris.InsertSlider(ui, "#gtetris.boardshaking", "BoardShaking", 0, 3, function(val)
 				return (val * 100).."%"
 			end)
 		end,

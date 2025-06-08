@@ -5,7 +5,7 @@ function GTetris.AddBackButton(parent, func, nooverride)
 	local gap = ScreenScaleH(6)
 	local base = GTetris.CreatePanel(parent, 0, scrh * 0.8, ScreenScaleH(1), h, Color(25, 25, 25, 255))
 	local icon = GTetris.CreatePanelMatAuto(base, gap, gap, h - gap * 2, h - gap * 2, "gtetris/quit.png", color_white)
-	local _, _, title = GTetris.CreateLabel(base, w * 0.5, h * 0.5, "Back", "GTetris_UIFontMedium2x", color_white)
+	local _, _, title = GTetris.CreateLabel(base, w * 0.5, h * 0.5, "#browser.back", "GTetris_UIFontMedium2x", color_white)
 	local btn = GTetris.ApplyIButton(base, function()
 		base.Exiting = true
 		func()
